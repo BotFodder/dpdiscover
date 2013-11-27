@@ -51,7 +51,7 @@ function plugin_dpdiscover_check_config () {
 
 function plugin_dpdiscover_upgrade () {
 	// Here we will upgrade to the newest version
-	discovery_dpcheck_upgrade ();
+	dpdiscover_check_upgrade ();
 	return false;
 }
 
@@ -70,7 +70,7 @@ function dpdiscover_check_upgrade () {
 		return;
 	}
 
-	$version = plugin_dpdiscover_version ();
+	$version = plugin_dpdiscover_version();
 	$current = $version['version'];
 	$old = read_config_option('plugin_dpdiscover_version');
 	if ($current != $old) {
@@ -111,7 +111,7 @@ function dpdiscover_check_upgrade () {
 function plugin_dpdiscover_version () {
 	return array(
 		'name'     => 'dpdiscover',
-		'version'  => '1.0',
+		'version'  => '1.1',
 		'longname' => 'DP Discover',
 		'author'   => 'Eric Stewart',
 		'homepage' => 'http://runningoffatthemouth.com/?p=1067',
