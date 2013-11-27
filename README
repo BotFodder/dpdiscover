@@ -1,0 +1,75 @@
+/*******************************************************************************
+
+    Author ......... Eric Stewart
+    Contact ........ eric@ericdives.com
+    Home Site ...... http://runningoffatthemouth.com
+    Program ........ DP Discover
+    Version ........ 1.0
+    Purpose ........ Find Network Equipment Using Discovery Protocols
+
+*******************************************************************************/
+
+----[ Purpose
+
+    This plugin attempts to find LLDP, CDP, and FDP information on
+existing hosts via SNMP, and attempts to add unknown equipment to Cacti.
+
+----[ Features
+
+	Host Filter
+	Displays Host Status
+	Displays DNS Name
+	Displays SNMP Status and Information
+	Link to add device to Cacti.
+	Allows Discovery Templates to allow adding the device to Cacti
+
+----[ Installation
+
+	If you have not already done so, install the Plugin Architecture
+	http://cactiusers.org/wiki/PluginArchitectureInstall
+
+	Next install this Plugin using these directions
+	http://cactiusers.org/wiki/PluginsInstall
+
+	For more information on this plugin
+	http://runningoffatthemouth.com/?p=1067
+
+
+----[ Changelog
+
+    --- 1.0 ---
+    - FDP!  Tested even.  Turns out we have Brocades that don't have LLDP on.
+    - Code for IPv6 only hosts as hostnames added as "udp6:hostname.com". Not
+      tested.
+
+    --- 0.4 ---
+    - IPv6 has been tested.  Code has been written so that, if using IP as the
+      hostname, the IP is added as 'udp6:[IPv6::IP]'.  However, I think if you
+      use the FQDN as the hostname, this won't work if there's no v4 address
+      for the name (in other words, I'd have to add the FQDN as
+      udp6:hostname.com for it to work, and that code isn't there yet).  IPv6
+      operation may be heavily dependent on which SNMP you're using; Net-SNMP
+      should work fine, but YMMV.
+    - Options to use or not use LLDP or CDP are provided.  If both are
+      selected, a host will be scanned with both (LLDP first, then CDP) no
+      matter what the device returns with LLDP.  However, the code should
+      operate in such a way as to only add a device once if it shows up in
+      both LLDP and CDP.
+
+    --- 0.3 ---
+    - BUG FIX: findhosts.php was not reading in dpdiscover_parent_filter
+      properly, so it would use parent without filtering.
+
+    --- 0.2 ---
+    - Report tab cleaned up.
+    - Name unification - a lot less "dpdiscovery" than before.
+    - Email report includes devices found, with valid IP, but not added or
+      known.
+    - Will take settings from 0.1, delete them, add them with new names
+
+    --- 0.1 ---
+    Initial release, based heavily on the original Auto Discovery plugin.
+    This version only tries LLDP and (failing that), CDP.
+    See README.org
+
+

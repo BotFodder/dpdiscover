@@ -1,0 +1,142 @@
+/*******************************************************************************
+
+    Author ......... Jimmy Conner
+    Contact ........ jimmy@sqmail.org
+    Home Site ...... http://sqmail.org
+    Program ........ Auto Host Discovery
+    Version ........ 1.5
+    Purpose ........ View Hosts on a Subnet that are not monitored by Cacti
+
+*******************************************************************************/
+
+----[ Purpose
+
+    This plugin adds the ability to auto-discover devices on a subnet that are not monitored by Cacti and and tells you if they are SNMP enabled.
+
+----[ Features
+
+	Host Filter
+	Displays Host Status
+	Displays DNS Name
+	Displays SNMP Status and Information
+	Link to add device to Cacti.
+	Allows Discovery Templates to allow auto-creating graphs and adding the device to Cacti
+
+----[ Installation
+
+	If you have not already done so, install the Plugin Architecture
+	http://cactiusers.org/wiki/PluginArchitectureInstall
+
+	Next install this Plugin using these directions
+	http://cactiusers.org/wiki/PluginsInstall
+
+	For more information on this plugin
+	http://cactiusers.org/wiki/DiscoverDocs
+
+
+----[ Changelog
+
+    --- 1.5 ---
+    compat: Add compatibility for 0.8.7i
+
+    --- 1.4 ---
+    feature: Support for Ugroup Plugin
+
+    --- 1.3 ---
+    bug: Do not add a host to the list if its discovered as more than one IP
+    security: dont let findhosts run from the web server
+
+    --- 1.2a ---
+    bug: fix for single community name
+
+    --- 1.2 ---
+    feature: add SNMP V3 checks
+    feature: scan SNMP versions in V3 -> V2 -> V1 order
+    feature: use discovered SNMP community for discovery host table
+    feature: suppress graph and tree creation in case AUTOM8 is present (leave this job to autom8, then)
+    feature: use current (PIA 2.9+) plugin API to detect plugin availability for thold, autom8
+    
+    --- 1.1 ---
+    bug: Correct title display of discovery header
+    bug: Use the snmp version and communities from the presets
+    bug: Fix pagination bug
+    
+    --- 1.0 ---
+    feature: Change images to buttons
+    feature: Add general header
+    feature: Add tab down behavior
+    feature: Standardize interface
+    feature: Add 10.1.*.1 style IP pseudo nets
+    feature: Make adding 'unknown' by hostname devices easier
+    feature: Ping first not to generate so many timeout errors
+
+    --- 0.9 ---
+    feature: Discovery is now only PA 2.0 compatible
+
+    --- 0.8.4 ---
+    bug: Fix error in 0.8.7 when clicking 'Add'
+
+    --- 0.8.3 ---
+    bug: Fix api_device_save call
+
+    --- 0.8.2 ---
+    compat: Yet even more fixes for Cacti v0.8.7 compatibility
+    bug: Fix issue with Clearing Discovery Results
+    bug: Now requires Cacti v0.8.7
+
+    --- 0.8.1 ---
+    compat: More compatibility fixes for 0.8.7
+    bug: Fix undefined errors when using TCP Ping
+    feature: Create option to rerun Data Queries on current hosts and create graphs for all assigned Templates
+    feature: Create option to only create graphs for interfaces showing as Up
+
+    --- 0.8 ---
+    bug: Fix a bug that didn't allow .0 to be used as a valid address .255 is skipped as PHP does not
+         allow us to ping possible broadcast addresses, even when it might not be one
+    feature: Use new "api_user_realm_auth" from Plugin Architecture
+    compat: Fix compatibility with Cacti 0.8.7
+
+    --- 0.7 ---
+    feature: Added patch to ensure it only creates interface graphs for interfaces that are up
+    feature: Added patch to allow the requerying of a known host (and thus create any new graphs)
+    feature: Add ability to scan subnets specified like 192.168.48.120/23
+    feature: Add Discovery Templates and allow auto-creation and insertion of graphs
+    feature: Add some larger polling intervals in the Settings
+    feature: Auto-create thresholds if the thold plugin is being used
+    feature: Compatible with Multiple Polling Intervals (1 Minute Polling)
+
+    --- 0.6 ---
+    bug: Fix timeout problem with the discovery process
+    bug: Fix for the poller not allowing scans to be scheduled in less than 24 hours from now
+    bug: Fix for hostname detection of devices already in Cacti database.
+    feature: Update plugin tab to better resemble the original cacti images
+    feature: Add more filtering options for the results page
+    bug: Fix a bug when viewing multiple pages when your default per page is not 30
+
+    --- 0.5 ---
+    bug#0000043 - Add "Utility" Link to Clear Discovery Results
+    feature#0000039 - Add option for Start Time and Polling Frequency
+    feature: Changed column name in plugin_discover_os table (match to matchstring), but made the plugin backwards compatible with the old column
+    feature: Added command line options to force the polling, show debug output, and to drop and recreate the tables
+
+    --- 0.4 ---
+    bug#0000018: Add option for SNMP Community Names to use, before it was hardcoded with just 'public'.
+    bug: If DNS times out, don't display the current name as 'timed_out'
+    feature#0000012: Add option to allow to display as a Menu item instead of as a Tab
+    bug: Fix display errors for PHP < 4.1.0, $_SERVER variable did not exist
+    feature: Added new column to the database to store the hosts community name
+    feature: Added the ability to use subnets/ranges such as 10.1.0.0/255.255.253.0, 10.1.0.19/255.255.255.240, 10.1.0.19-10.1.0.27, 10.1.0.0/24
+
+    --- 0.3 ---
+    bug: Fixed issue with the SQL files and imports and Mysql 3.*
+    bug#0000013: Fix issues with database names with uncommon characters by enclosing in back-ticks.
+
+    --- 0.2 ---
+    feature: Added option for specifying a DNS server
+    feature: Added option to use UDP/TCP/or ICMP for pinging
+    bug: A little code cleanup and fixing
+
+    --- 0.1 ---
+    Initial release
+
+
