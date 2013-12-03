@@ -410,6 +410,7 @@ $send_report_to = read_config_option("dpdiscover_email_report");
 if (isset($dpdiscovered['dphost'])) {
 	$message = "REPORT OF DEVICES ADDED BY DPDISCOVERY:\n\n";
 	$found = "\nREPORT: Has IP, but not added:\n\n";
+	$skipped = "\nDevices Excluded:\n\n";
 	foreach($dpdiscovered['dphost'] as $host => $device) {
 		if(!isset($device['parent'])) {
 			$device['parent'] = '';
@@ -422,7 +423,11 @@ if (isset($dpdiscovered['dphost'])) {
 		}
 		if((is_ipv6($device['ip']) || is_ipv4($device['ip'])) &&
 		   $device['added'] != 1 && $device['protocol'] != "known") {
-			$found .= $device['description']." - ".$device['ip']." FOUND VIA: ".$device['parent']." - ".$device['port']."\n";
+			if(check_exclusion($device['description'])) {
+				$skipped .= $device['description']." - ".$device['ip']." FOUND VIA: ".$device['parent']." - ".$device['port']."\n";
+			}else{
+				$found .= $device['description']." - ".$device['ip']." FOUND VIA: ".$device['parent']." - ".$device['port']."\n";
+			}
 		}
 		if($debug === FALSE) {
 			db_execute("REPLACE INTO plugin_dpdiscover_hosts (hostname, ip, snmp_community, snmp_version, snmp_username, snmp_password, snmp_auth_protocol, snmp_priv_passphrase, snmp_priv_protocol, snmp_context, sysName, sysLocation, sysContact, sysDescr, sysUptime, os, added, snmp_status, time, protocol, parent, port) VALUES ('"
@@ -478,11 +483,15 @@ if (isset($dpdiscovered['dphost'])) {
 	}
 	if(filter_var($send_report_to, FILTER_VALIDATE_EMAIL)) {
 		$subject = "DP Discover Report";
-		mail($send_report_to, $subject, $message.$found);
+		if(read_config_option("dpdiscover_include_skipped") == "on") {
+			mail($send_report_to, $subject, $message.$found.$skipped);
+		}else{
+			mail($send_report_to, $subject, $message.$found);
+		}
 	}else{
 		dpdiscover_debug($send_report_to." is not a valid email\n");
 	}
-	dpdiscover_debug($message.$found."\n");
+	dpdiscover_debug($message.$found.$skipped."\n");
 }
 
 exit;

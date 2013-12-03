@@ -243,17 +243,17 @@ function dpdiscover_config_settings () {
 			'method' => 'checkbox',
 			'default' => 'on',
 			),
-		'dpdiscover_use_fdp' => array(
-			'friendly_name' => "Check Hosts FDP",
-			'description' => "Check all hosts for FDP (Foundry Discovery Protocol, now owned by Brocade) information.  Even if a host has LLDP information, some of the hosts connected to it may not talk LLDP, and may only be found via FDP.  Older Foundry or Brocade devices may not speak or provide LLDP information via SNMP, or LLDP may not be turned on.  It should be safe to leave this off, but if you're not concerned that running both LLDP and FDP would cause unneccessary duplication of effort/the script to run longer than it has to, go ahead and turn it on.",
-			'method' => 'checkbox',
-			),
 		"dpdiscover_email_report" => array(
 			"friendly_name" => "Report Email",
 			"description" => "Email address to send report of systems added by the plugin.  Leave blank to not send email.",
 			"method" => "textbox",
 			"max_length" => 255,
 			"default" => ""
+			),
+		'dpdiscover_include_skipped' => array(
+			'friendly_name' => "Include Skipped Hosts",
+			'description' => "When emailing the report, include a list of hosts discovered but excluded because of \"Exclude Host Filters\" above.",
+			'method' => 'checkbox',
 			),
 	);
 	if (isset($settings["misc"]))
