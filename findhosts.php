@@ -204,11 +204,12 @@ $domain_name = read_config_option("dpdiscover_domain_name");
 $use_fqdn_description = read_config_option("dpdiscover_use_fqdn_description");
 /* Do we use the IP for the hostname?  If not, use FQDN */
 $use_ip_hostname = read_config_option("dpdiscover_use_ip_hostname");
+$fix_ip_hostname = read_config_option("dpdiscover_fix_ip_hostname");
 
 cacti_log("DP Discover is now running", true, "POLLER");
 
 // Get array of snmp information.
-$known_hosts = db_fetch_assoc("SELECT hostname, host_template_id, description, snmp_community, snmp_version, snmp_username, snmp_password, snmp_auth_protocol, snmp_priv_passphrase, snmp_priv_protocol, snmp_context, snmp_port, snmp_timeout, max_oids FROM host");
+$known_hosts = db_fetch_assoc("SELECT id, hostname, host_template_id, description, snmp_community, snmp_version, snmp_username, snmp_password, snmp_auth_protocol, snmp_priv_passphrase, snmp_priv_protocol, snmp_context, snmp_port, snmp_timeout, max_oids FROM host");
 
 // Get Oses
 $temp = db_fetch_assoc("SELECT plugin_dpdiscover_template.*, host_template.name 
@@ -313,14 +314,48 @@ $search[$sidx]['snmp_auth_protocol'], $search[$sidx]['snmp_priv_passphrase'],
 $search[$sidx]['snmp_priv_protocol'], $search[$sidx]['snmp_context'], $search[$sidx]['snmp_port'],
 $search[$sidx]['snmp_timeout'], $snmp_retries, $search[$sidx]['max_oids'], SNMP_POLLER);
 	if (!isset($sysObjectID) || $sysObjectID == "") {
+		dpdiscover_debug("$sidx FAILED sysObjectID for ".$dpdiscovered['dphost'][$shortsearch]['ip']."\n");
+		// Should we fix it?
+		if($fix_ip_hostname == "on" && $use_ip_hostname == "on" &&
+		   $dpdiscovered['dphost'][$dphost]['protocol'] == "known") {
+			$newip = get_ip($dpdiscovered['dphost'][$shortsearch]['hostname']);
+			if($newip != $dpdiscovered['dphost'][$shortsearch]['ip'] &&
+			   (is_ipv4($newip) || is_ipv6($newip))) {
+$sysObjectID = cacti_snmp_get($newip,
+$search[$sidx]['snmp_community'], $sysObjectID_OID,
+$search[$sidx]['snmp_version'], $search[$sidx]['snmp_username'], $search[$sidx]['snmp_password'],
+$search[$sidx]['snmp_auth_protocol'], $search[$sidx]['snmp_priv_passphrase'],
+$search[$sidx]['snmp_priv_protocol'], $search[$sidx]['snmp_context'], $search[$sidx]['snmp_port'],
+$search[$sidx]['snmp_timeout'], $snmp_retries, $search[$sidx]['max_oids'], SNMP_POLLER);
+	if (!isset($sysObjectID) || $sysObjectID == "") {
 		$sidx++;
 		continue;
+	}else{
+		dpdiscover_debug("$sidx see new IP: $newip for $shortsearch\n");
+		$dpdiscovered['dphost'][$shortsearch]['oldip'] = $dpdiscovered['dphost'][$shortsearch]['ip'];
+		$dpdiscovered['dphost'][$shortsearch]['ip'] = $newip;
+		// Fix it!
+		if($debug === FALSE) {
+			db_execute("UPDATE host SET hostname='".$newip."' WHERE id=".$dpdiscovered['dphost'][$shortsearch]['id']);
+			cacti_log("DPDiscover changed IP for ".$dpdiscovered['dphost'][$shortsearch]['id']." ".$shortsearch." from ".$dpdiscovered['dphost'][$shortsearch]['oldip']." to ".$newip, TRUE, "POLLER");
+		}else{
+			dpdiscover_debug("UPDATE host SET hostname='".$newip."' WHERE id=".$dpdiscovered['dphost'][$shortsearch]['id']."\n");
+			cacti_log("DPDiscover would change IP for ".$dpdiscovered['dphost'][$shortsearch]['id']." ".$shortsearch." from ".$dpdiscovered['dphost'][$shortsearch]['oldip']." to ".$newip, TRUE, "POLLER");
+		}
+	}
+			}else{
+				$sidx++;
+				continue;
+			}
+		}else{
+			$sidx++;
+			continue;
+		}
 	}
 	$dparray = array();
 	$use_lldp = read_config_option("dpdiscover_use_lldp");
 	$use_cdp = read_config_option("dpdiscover_use_cdp");
 	$use_fdp = read_config_option("dpdiscover_use_fdp");
-	dpdiscover_debug($use_fdp."\n");
 	if ($use_lldp == "on" && FALSE !== ($lldparray = LLDP_Discovery($search[$sidx]))) {
 //		print "$sidx We may have things we need to search ".sizeof($dparray)."\n";
 		$dparray = array_merge($dparray, $lldparray);
@@ -454,6 +489,7 @@ if (isset($dpdiscovered['dphost'])) {
 . sql_sanitize($device['parent']) ."', '"
 . sql_sanitize($device['port']) ."'"
 . ")" );
+/*
 		}else{
 			dpdiscover_debug("REPLACE INTO plugin_dpdiscover_hosts (hostname, ip, snmp_community, snmp_version, snmp_username, snmp_password, snmp_auth_protocol, snmp_priv_passphrase, snmp_priv_protocol, snmp_context, sysName, sysLocation, sysContact, sysDescr, sysUptime, os, added, snmp_status, time, protocol, parent, port) VALUES ('"
 . sql_sanitize($device['hostname'])."', '"
@@ -479,6 +515,7 @@ if (isset($dpdiscovered['dphost'])) {
 . sql_sanitize($device['parent']) ."', '"
 . sql_sanitize($device['port']) ."'"
 . ")\n" );
+*/
 		}
 	}
 	if(filter_var($send_report_to, FILTER_VALIDATE_EMAIL)) {
@@ -525,7 +562,7 @@ $searchme['max_oids'], SNMP_POLLER);
 		}
 		if(isset($dpdiscovered['dphost'][$lldpnames[$i]['description']]['parent'])) {
 			// Already know.
-			dpdiscover_debug("We know about ".$lldpnames[$i]['description']." - ".$dpdiscovered['dphost'][$lldpnames[$i]['description']]['parent']."\n");
+//			dpdiscover_debug("We know about ".$lldpnames[$i]['description']." - ".$dpdiscovered['dphost'][$lldpnames[$i]['description']]['parent']."\n");
 			continue;
 		}
 		$lldpport = cacti_snmp_get($dpdiscovered['dphost'][$lldphost]['ip'],
@@ -605,7 +642,7 @@ $searchme['max_oids'], SNMP_POLLER);
 		}
 		if (isset($dpdiscovered['dphost'][$cdpnames[$i]['description']]['parent'])) {
 			// We already know what we want to know.
-			dpdiscover_debug("Already know about ".$cdpnames[$i]['description']. " - ".$dpdiscovered['dphost'][$cdpnames[$i]['description']]['parent']."\n");
+//			dpdiscover_debug("Already know about ".$cdpnames[$i]['description']. " - ".$dpdiscovered['dphost'][$cdpnames[$i]['description']]['parent']."\n");
 			continue;
 		}
 		$cdpport = cacti_snmp_get($dpdiscovered['dphost'][$cdphost]['ip'],
@@ -675,7 +712,7 @@ $searchme['max_oids'], SNMP_POLLER);
 		}
 		if (isset($dpdiscovered['dphost'][$fdpnames[$i]['description']]['parent'])) {
 			// We already know what we want to know.
-			dpdiscover_debug("Already know about ".$fdpnames[$i]['description']. " - ".$dpdiscovered['dphost'][$fdpnames[$i]['description']]['parent']."\n");
+//			dpdiscover_debug("Already know about ".$fdpnames[$i]['description']. " - ".$dpdiscovered['dphost'][$fdpnames[$i]['description']]['parent']."\n");
 			continue;
 		}
 		$fdpport = cacti_snmp_get($dpdiscovered['dphost'][$fdphost]['ip'],
@@ -1005,7 +1042,7 @@ function is_ipv6($address) {
 		// Check for SNMP specification and brackets
 		if(preg_match("/udp6:\[(.*)\]/", $address, $matches) > 0 &&
 			filter_var($matches[1], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== FALSE) {
-			dpdiscover_debug("Is IPv6: $address ".$matches[1]."\n");
+//			dpdiscover_debug("Is IPv6: $address ".$matches[1]."\n");
 			return TRUE;
 		}
 		return FALSE;

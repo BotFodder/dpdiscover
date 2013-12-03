@@ -116,7 +116,7 @@ function dpdiscover_check_upgrade () {
 function plugin_dpdiscover_version () {
 	return array(
 		'name'     => 'dpdiscover',
-		'version'  => '1.1',
+		'version'  => '1.2',
 		'longname' => 'DP Discover',
 		'author'   => 'Eric Stewart',
 		'homepage' => 'http://runningoffatthemouth.com/?p=1067',
@@ -223,6 +223,12 @@ function dpdiscover_config_settings () {
 		'dpdiscover_use_ip_hostname' => array(
 			'friendly_name' => "Use IP For Hostname",
 			'description' => "For a device to be added to Cacti, the IP must be resolved via DNS.  When adding the device, do you want to use the detected IP as the Cacti hostname?  Yes will reduce queries against the DNS server for the system and give a greater chance of polling occurring should DNS fail somewhere along the line.  No means the derived FQDN will be used instead.",
+			'method' => 'checkbox',
+			'default' => 'on',
+			),
+		'dpdiscover_fix_ip_hostname' => array(
+			'friendly_name' => "Fix IP For Hostname",
+			'description' => "If using the IP for the hostname in Cacti, should DPDiscover, if it cannot contact a known device via IP, check DNS to see if the IP has changed, and if so, update the IP?",
 			'method' => 'checkbox',
 			'default' => 'on',
 			),
