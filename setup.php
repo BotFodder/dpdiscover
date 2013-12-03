@@ -63,6 +63,7 @@ function dpdiscover_check_upgrade () {
 	global $config, $database_default;
 	include_once($config["library_path"] . "/database.php");
 	include_once($config["library_path"] . "/functions.php");
+	cacti_log("DPDiscover check upgrade running\n");
 
 	// Let's only run this check if we are on a page that actually needs the data
 	$files = array('plugins.php', 'dpdiscover.php', 'dpdiscover_template.php');
@@ -73,6 +74,9 @@ function dpdiscover_check_upgrade () {
 	$version = plugin_dpdiscover_version();
 	$current = $version['version'];
 	$old = read_config_option('plugin_dpdiscover_version');
+	if(!isset($old)) {
+		$old = 0.0;
+	}
 	if ($current != $old) {
 		$dpdiscover_columns = array_rekey(db_fetch_assoc("SHOW COLUMNS FROM plugin_dpdiscover_hosts"), "Field", "Field");
 		if (!in_array("snmp_version", $dpdiscover_columns)) {
@@ -98,13 +102,14 @@ function dpdiscover_check_upgrade () {
 		}
 
 		// Set the new version
-		db_execute("UPDATE plugin_config SET version='$current' WHERE directory='dpdiscover'");
+//		db_execute("UPDATE plugin_config SET version='$current' WHERE directory='dpdiscover'");
 		db_execute("UPDATE plugin_config SET " .
 				"version='" . $version["version"] . "', " .
 				"name='" . $version["longname"] . "', " .
 				"author='" . $version["author"] . "', " .
 				"webpage='" . $version["url"] . "' " .
 				"WHERE directory='" . $version["name"] . "' ");
+		db_execute("REPLACE INTO settings (name, value) VALUES ('plugin_dpdiscover_version','".$version['version']."')");
 	}
 }
 
