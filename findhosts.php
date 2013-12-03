@@ -337,6 +337,7 @@ $search[$sidx]['snmp_timeout'], $snmp_retries, $search[$sidx]['max_oids'], SNMP_
 		// Fix it!
 		if($debug === FALSE) {
 			db_execute("UPDATE host SET hostname='".$newip."' WHERE id=".$dpdiscovered['dphost'][$shortsearch]['id']);
+			db_execute("UPDATE poller_item SET hostname='".$newip."' WHERE host_id=".$dpdiscovered['dphost'][$shortsearch]['id']);
 			cacti_log("DPDiscover changed IP for ".$dpdiscovered['dphost'][$shortsearch]['id']." ".$shortsearch." from ".$dpdiscovered['dphost'][$shortsearch]['oldip']." to ".$newip, TRUE, "POLLER");
 		}else{
 			dpdiscover_debug("UPDATE host SET hostname='".$newip."' WHERE id=".$dpdiscovered['dphost'][$shortsearch]['id']."\n");
