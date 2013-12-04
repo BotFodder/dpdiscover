@@ -467,7 +467,8 @@ $dpdiscovered['dphost'][$shortsearch]['device_threads']
 // DUMP $dpdiscovered to database; send report
 $send_report_to = read_config_option("dpdiscover_email_report");
 if (isset($dpdiscovered['dphost'])) {
-	$message = "REPORT OF DEVICES ADDED BY DPDISCOVERY:\n\n";
+	$ipchange = "";
+	$message = "\nREPORT OF DEVICES ADDED BY DPDISCOVERY:\n\n";
 	$found = "\nREPORT: Has IP, but not added:\n\n";
 	$skipped = "\nDevices Excluded:\n\n";
 	foreach($dpdiscovered['dphost'] as $host => $device) {
@@ -476,6 +477,9 @@ if (isset($dpdiscovered['dphost'])) {
 		}
 		if(!isset($device['port'])) {
 			$device['port'] = '';
+		}
+		if(isset($device['oldip'])) {
+			$ipchange .= "Changed ".$device['description']." IP from ".$device['oldip']." to ".$device['ip']."\n";
 		}
 		if($device['added'] == 1) {
 			$message .= $device['description']." - ".$device['ip']." - ".$device['os']." FOUND VIA: ".$device['parent']." - ".$device['port']."\n";
@@ -545,14 +549,14 @@ if (isset($dpdiscovered['dphost'])) {
 	if(filter_var($send_report_to, FILTER_VALIDATE_EMAIL)) {
 		$subject = "DP Discover Report";
 		if(read_config_option("dpdiscover_include_skipped") == "on") {
-			mail($send_report_to, $subject, $message.$found.$skipped);
+			mail($send_report_to, $subject, $ipchange.$message.$found.$skipped);
 		}else{
-			mail($send_report_to, $subject, $message.$found);
+			mail($send_report_to, $subject, $ipchange.$message.$found);
 		}
 	}else{
 		dpdiscover_debug($send_report_to." is not a valid email\n");
 	}
-	dpdiscover_debug($message.$found.$skipped."\n");
+	dpdiscover_debug($ipchange.$message.$found.$skipped."\n");
 }
 
 exit;
