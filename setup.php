@@ -116,7 +116,7 @@ function dpdiscover_check_upgrade () {
 function plugin_dpdiscover_version () {
 	return array(
 		'name'     => 'dpdiscover',
-		'version'  => '1.25',
+		'version'  => '1.26',
 		'longname' => 'DP Discover',
 		'author'   => 'Eric Stewart',
 		'homepage' => 'http://runningoffatthemouth.com/?p=1067',
@@ -248,6 +248,11 @@ function dpdiscover_config_settings () {
 			'description' => "Check all hosts for CDP (Cisco Discovery Protocol) information.  Even if a host has LLDP information, some of the hosts connected to it may not talk LLDP, and may only be found via CDP.  Older Cisco IOS devices may not speak or provide LLDP information via SNMP.  It is advised to turn this off only if you have no Cisco devices on your network, or are satisfied that running both LLDP and CDP would cause unneccessary duplication of effort/the script to run longer than it has to.",
 			'method' => 'checkbox',
 			'default' => 'on',
+			),
+		'dpdiscover_use_fdp' => array(
+			'friendly_name' => "Check Hosts FDP",
+			'description' => "Check all hosts for FDP (Foundry Discovery Protocol) information.  Even if a host has LLDP information, some of the hosts connected to it may not talk LLDP, and may only be found via FDP.  Older Brocade/Foundry devices may not speak or provide LLDP information via SNMP.  It is advised to turn this on only if you have Brocade or Foundry devices on your network.",
+			'method' => 'checkbox',
 			),
 		"dpdiscover_email_report" => array(
 			"friendly_name" => "Report Email",

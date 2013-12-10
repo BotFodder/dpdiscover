@@ -4,7 +4,7 @@
     Contact ........ eric@ericdives.com
     Home Site ...... http://runningoffatthemouth.com
     Program ........ DP Discover
-    Version ........ 1.0
+    Version ........ 1.26
     Purpose ........ Find Network Equipment Using Discovery Protocols
 
 *******************************************************************************/
@@ -36,6 +36,11 @@ existing hosts via SNMP, and attempts to add unknown equipment to Cacti.
 
 
 ----[ Changelog
+
+    --- 1.26 ---
+    - The FDP setting had been removed somewhere along the line; added it back.
+    - There was a 1.1, 1.2, and 1.25 before this that introduced some
+      additional functionality, including discovery and repair of changed IPs.
 
     --- 1.0 ---
     - FDP!  Tested even.  Turns out we have Brocades that don't have LLDP on.
