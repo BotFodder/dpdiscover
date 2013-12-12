@@ -70,7 +70,6 @@ function form_save() {
 		$save["id"] = $_POST["id"];
 		$save["host_template"] = form_input_validate($_POST["host_template"], "host_template", "", false, 3);
 //		$save["snmp_version"] = form_input_validate($_POST["snmp_version"], "snmp_version", "", false, 3);
-//		$save["tree"] = form_input_validate($_POST["tree"], "tree", "", false, 3);
 		$save["sysdescr"] = sql_sanitize($_POST["sysdescr"]);
 
 		if (!is_error_message()) {
@@ -166,31 +165,6 @@ function form_actions() {
 /* ---------------------
     Template Functions
    --------------------- */
-
-function dpdiscover_get_tree_headers() {
-	$headers = array();
-	$trees = db_fetch_assoc("SELECT id, name FROM graph_tree ORDER by ID");
-	foreach ($trees as $tree) {
-		$headers[($tree['id'] + 1000000)] = $tree['name'];
-		$items = db_fetch_assoc("SELECT id, title, order_key FROM graph_tree_items WHERE graph_tree_id = " . $tree['id'] . " AND host_id = 0 ORDER BY order_key");
-		foreach ($items as $item) {
-			$order_key = $item['order_key'];
-			$len = strlen($order_key);
-			$spaces = '';
-			for ($a = 0; $a < $len; $a=$a+3) {
-				$n = substr($order_key, $a, 3);
-				if ($n != '000') {
-					$spaces .= '--';
-				} else {
-					$a = $len;
-				}
-			}
-
-			$headers[$item['id']] = $spaces . $item['title'];
-		}
-	}
-	return $headers;
-}
 
 function template_edit() {
 	global $colors, $snmp_versions;

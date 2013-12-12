@@ -70,9 +70,6 @@ include_once($config["base_path"] . '/lib/sort.php');
 include_once($config["base_path"] . '/lib/html_form_template.php');
 include_once($config["base_path"] . '/lib/template.php');
 
-include_once($config["base_path"] . '/lib/api_tree.php');
-include_once($config["base_path"] . '/lib/tree.php');
-
 /* process calling arguments */
 $parms = $_SERVER["argv"];
 array_shift($parms);
