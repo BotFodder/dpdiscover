@@ -433,6 +433,7 @@ $dpdiscovered['dphost'][$shortsearch]['device_threads']
 					$dpdiscovered['dphost'][$pdevice['description']]['os'] = $pdevice['os'];
 					$dpdiscovered['dphost'][$pdevice['description']]['host_template_id'] = $pdevice['host_template_id'];
 					dpdiscover_debug($pdevice['description']." OS ".$pdevice['os']." ID ".$pdevice['host_template_id']."\n");
+					$host_id = 0;
 					$host_id = dpdiscover_add_device($pdevice);
 				}else{
 					$dpdiscovered['dphost'][$pdevice['description']]['os'] = "No Match";
@@ -827,7 +828,6 @@ function dpdiscover_add_device ($device) {
 		db_execute("DELETE FROM plugin_dpdiscover_hosts WHERE ip = '$ip' LIMIT 1");
 	}
 */
-	//api_device_remove($host_id);
 	return $host_id;
 }
 
