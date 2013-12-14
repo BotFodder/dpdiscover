@@ -161,7 +161,7 @@ if (isset($_GET['button_export_x'])) {
 		}
 		print $host['hostname'] . ",";
 		print $host['ip'] . ",";
-		print $host['community'] . ",";
+		print $host['snmp_community'] . ",";
 		print $host['sysName'] . ",";
 		print $host['sysLocation'] . ",";
 		print $host['sysContact'] . ",";
@@ -405,7 +405,7 @@ if ($row['protocol'] != "known" && $row['added'] != 1) {
 			<input type=hidden name=hostname value=\"" . $row['ip'] . "\">
 			<input type=hidden name=id value=0>
 			<input type=hidden name=description value=\"".$row['hostname']."\">
-			<input type=hidden name=snmp_community value=\"" . $row['community'] . "\">
+			<input type=hidden name=snmp_community value=\"" . $row['snmp_community'] . "\">
 			<input type=hidden name=snmp_version value=\"$snmp_version\">
 			<input type=hidden name=snmp_username value=\"$snmp_username\">
 			<input type=hidden name=snmp_password value=\"$snmp_password\">
