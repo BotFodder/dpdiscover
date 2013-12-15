@@ -66,7 +66,7 @@ function dpdiscover_check_upgrade () {
 	cacti_log("DPDiscover check upgrade running\n");
 
 	// Let's only run this check if we are on a page that actually needs the data
-	$files = array('plugins.php', 'dpdiscover.php', 'dpdiscover_template.php');
+	$files = array('plugins.php', 'dpdiscover.php', 'dpdiscover_template.php', 'findhosts.php');
 	if (isset($_SERVER['PHP_SELF']) && !in_array(basename($_SERVER['PHP_SELF']), $files)) {
 		return;
 	}
@@ -100,9 +100,15 @@ function dpdiscover_check_upgrade () {
 		if (!in_array("snmp_context", $dpdiscover_columns)) {
 			db_execute("ALTER TABLE plugin_dpdiscover_hosts ADD COLUMN snmp_context varchar(64) DEFAULT '' AFTER snmp_priv_protocol");
 		}
+		if (!in_array("lastseen", $dpdiscover_columns)) {
+			db_execute("ALTER TABLE plugin_dpdiscover_hosts ADD COLUMN lastseen timestamp NOT NULL AFTER port");
+		}
+		$uptime = db_fetch_assoc("SHOW COLUMNS FROM plugin_dpdiscover_hosts WHERE Field='sysUptime'");
+		if($uptime[0]['Type'] == 'int(32)') {
+			db_execute("ALTER TABLE plugin_dpdiscover_hosts MODIFY COLUMN sysUptime int(64) NOT NULL DEFAULT 0");
+		}
 
 		// Set the new version
-//		db_execute("UPDATE plugin_config SET version='$current' WHERE directory='dpdiscover'");
 		db_execute("UPDATE plugin_config SET " .
 				"version='" . $version["version"] . "', " .
 				"name='" . $version["longname"] . "', " .
@@ -116,7 +122,7 @@ function dpdiscover_check_upgrade () {
 function plugin_dpdiscover_version () {
 	return array(
 		'name'     => 'dpdiscover',
-		'version'  => '1.27',
+		'version'  => '1.291',
 		'longname' => 'DP Discover',
 		'author'   => 'Eric Stewart',
 		'homepage' => 'http://runningoffatthemouth.com/?p=1067',
@@ -321,7 +327,7 @@ function dpdiscover_draw_navigation_text ($nav) {
 	$nav["dpdiscover_template.php:"] = array("title" => "DPDiscover Templates", "mapping" => "index.php:", "url" => "dpdiscover_template.php", "level" => "1");
 	$nav["dpdiscover_template.php:edit"] = array("title" => "Discover Templates", "mapping" => "index.php:", "url" => "dpdiscover_template.php", "level" => "1");
 	$nav["dpdiscover_template.php:actions"] = array("title" => "Discover Templates", "mapping" => "index.php:", "url" => "dpdiscover_template.php", "level" => "1");
-	$nav["utilities.php:dpdiscover_clear"] = array("title" => "Clear Discover Results", "mapping" => "index.php:,utilities.php:", "url" => "dpdiscover.php", "level" => "1");
+	$nav["utilities.php:dpdiscover_clear"] = array("title" => "Clear DPDiscover Results", "mapping" => "index.php:,utilities.php:", "url" => "dpdiscover.php", "level" => "1");
 	return $nav;
 }
 
@@ -344,7 +350,7 @@ function dpdiscover_setup_table () {
 	$data['columns'][] = array('name' => 'sysLocation', 'type' => 'varchar(255)', 'NULL' => false, 'default' => '');
 	$data['columns'][] = array('name' => 'sysContact', 'type' => 'varchar(255)', 'NULL' => false, 'default' => '');
 	$data['columns'][] = array('name' => 'sysDescr', 'type' => 'varchar(255)', 'NULL' => false, 'default' => '');
-	$data['columns'][] = array('name' => 'sysUptime', 'type' => 'int(32)', 'NULL' => false, 'default' => '0');
+	$data['columns'][] = array('name' => 'sysUptime', 'type' => 'int(64)', 'NULL' => false, 'default' => '0');
 	$data['columns'][] = array('name' => 'os', 'type' => 'varchar(64)', 'NULL' => false, 'default' => '');
 	$data['columns'][] = array('name' => 'added', 'type' => 'tinyint(4)', 'NULL' => false, 'default' => '0');
 	$data['columns'][] = array('name' => 'snmp_status', 'type' => 'tinyint(4)', 'NULL' => false, 'default' => '0');
@@ -352,6 +358,7 @@ function dpdiscover_setup_table () {
 	$data['columns'][] = array('name' => 'protocol', 'type' => 'varchar(11)', 'NULL' => false, 'default' => '');
 	$data['columns'][] = array('name' => 'parent', 'type' => 'varchar(100)', 'NULL' => false, 'default' => '');
 	$data['columns'][] = array('name' => 'port', 'type' => 'varchar(100)', 'NULL' => false, 'default' => '');
+	$data['columns'][] = array('name' => 'lastseen', 'type' => 'timestamp', 'NULL' => false);
 	$data['primary'] = 'hostname';
 	$data['keys'][] = array('name' => 'hostname', 'columns' => 'hostname');
 	$data['type'] = 'MyISAM';

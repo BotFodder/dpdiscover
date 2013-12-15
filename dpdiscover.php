@@ -30,6 +30,7 @@ chdir('../../');
 include("./include/auth.php");
 
 dpdiscover_setup_table();
+dpdiscover_check_upgrade();
 
 define("MAX_DISPLAY_PAGES", 21);
 
@@ -321,7 +322,7 @@ html_start_box("", "100%", $colors["header"], "3", "center", "");
 $url_page_select = get_page_list($page, MAX_DISPLAY_PAGES, $per_row, $total_rows, "dpdiscover.php?view");
 
 $nav = "<tr bgcolor='#" . $colors["header"] . "'>
-		<td colspan='13'>
+		<td colspan='14'>
 			<table width='100%' cellspacing='0' cellpadding='0' border='0'>
 				<tr>
 					<td align='left' class='textHeaderDark'>
@@ -353,6 +354,7 @@ $display_text = array(
 	"protocol" => array("Protocol", "DESC"),
 	"time" => array("Uptime", "DESC"),
 	"snmp" => array("SNMP", "DESC"),
+	"lastseen" => array("Last Seen", "ASC"),
 //	"up" => array("Status", "ASC"),
 	"nosort" => array("", ""));
 
@@ -395,10 +397,11 @@ if (sizeof($result)) {
 			<td>' . $row['protocol'] . '</td>
 			<td>' . $uptime . '</td>
 			<td>' . $status[$row['snmp_status']] . '</td>
+			<td>' . $row['lastseen'] . '</td>
 			<td align="right">';
 //			<td>' . $status[$row['up']] . '</td>
 if ($row['protocol'] != "known" && $row['added'] != 1) {
-		print "'<form style=\"padding:0px;margin:0px;\" method=\"post\" action=\"../../host.php\">
+		print "<form style=\"padding:0px;margin:0px;\" method=\"post\" action=\"../../host.php\">
 			<input type=hidden name=save_component_host value=1>
 			<input type=hidden name=host_template_id value=0>
 			<input type=hidden name=action value=\"save\">

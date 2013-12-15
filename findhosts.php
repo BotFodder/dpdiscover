@@ -70,6 +70,7 @@ include_once($config["base_path"] . '/lib/sort.php');
 include_once($config["base_path"] . '/lib/html_form_template.php');
 include_once($config["base_path"] . '/lib/template.php');
 
+dpdiscover_check_upgrade();
 /* process calling arguments */
 $parms = $_SERVER["argv"];
 array_shift($parms);
@@ -287,6 +288,10 @@ foreach($known_hosts as $host) {
 		$dpdiscovered['ip'][$hostip] = $dphost;
 		$dpdiscovered['hostname'][$fqdnname] = $dphost;
 	}
+	if(is_ipv4($dpdiscovered['dphost'][$dphost]['ip']) ||
+	   is_ipv6($dpdiscovered['dphost'][$dphost]['ip'])) {
+		dpdiscover_get_snmp_values($dpdiscovered['dphost'][$dphost]);
+	}
 }
 
 $sysObjectID_OID = ".1.3.6.1.2.1.1.2.0";
@@ -491,7 +496,7 @@ if (isset($dpdiscovered['dphost'])) {
 			}
 		}
 		if($debug === FALSE) {
-			db_execute("REPLACE INTO plugin_dpdiscover_hosts (hostname, ip, snmp_community, snmp_version, snmp_username, snmp_password, snmp_auth_protocol, snmp_priv_passphrase, snmp_priv_protocol, snmp_context, sysName, sysLocation, sysContact, sysDescr, sysUptime, os, added, snmp_status, time, protocol, parent, port) VALUES ('"
+			db_execute("REPLACE INTO plugin_dpdiscover_hosts (hostname, ip, snmp_community, snmp_version, snmp_username, snmp_password, snmp_auth_protocol, snmp_priv_passphrase, snmp_priv_protocol, snmp_context, sysName, sysLocation, sysContact, sysDescr, sysUptime, os, added, snmp_status, time, protocol, parent, port, lastseen) VALUES ('"
 . sql_sanitize($device['hostname'])."', '"
 . sql_sanitize($device['ip'])."', '"
 . sql_sanitize($device['snmp_community']) . "', "
@@ -513,8 +518,8 @@ if (isset($dpdiscovered['dphost'])) {
 . time() .", '"
 . sql_sanitize($device['protocol']) ."', '"
 . sql_sanitize($device['parent']) ."', '"
-. sql_sanitize($device['port']) ."'"
-. ")" );
+. sql_sanitize($device['port']) ."',"
+. "NOW())" );
 /*
 		}else{
 			dpdiscover_debug("REPLACE INTO plugin_dpdiscover_hosts (hostname, ip, snmp_community, snmp_version, snmp_username, snmp_password, snmp_auth_protocol, snmp_priv_passphrase, snmp_priv_protocol, snmp_context, sysName, sysLocation, sysContact, sysDescr, sysUptime, os, added, snmp_status, time, protocol, parent, port) VALUES ('"
@@ -999,59 +1004,62 @@ $device['snmp_port'], $device['snmp_timeout']);
 		if($device["snmp_sysObjectID"] == '') {
 			$device["snmp_sysObjectID"] = $snmp_sysObjectID;
 		}
-		/* get system name */
-		$snmp_sysName = @cacti_snmp_get($device['ip'], $device['snmp_community'],
-					'.1.3.6.1.2.1.1.5.0', $device['snmp_version'],
-					$device['snmp_username'], $device['snmp_password'], $device['snmp_auth_protocol'], $device['snmp_priv_passphrase'], $device['snmp_priv_protocol'], $device['snmp_context'],
-					$device['snmp_port'], $device['snmp_timeout']);
-
-		if (strlen($snmp_sysName) > 0) {
-			$snmp_sysName = trim(strtr($snmp_sysName,"\""," "));
-			$device["snmp_sysName"] = $snmp_sysName;
-		}
-		/* get system location */
-		$snmp_sysLocation = @cacti_snmp_get($device['ip'], $device['snmp_community'],
-					'.1.3.6.1.2.1.1.6.0', $device['snmp_version'],
-					$device['snmp_username'], $device['snmp_password'], $device['snmp_auth_protocol'], $device['snmp_priv_passphrase'], $device['snmp_priv_protocol'], $device['snmp_context'],
-					$device['snmp_port'], $device['snmp_timeout']);
-
-		if (strlen($snmp_sysLocation) > 0) {
-			$snmp_sysLocation = trim(strtr($snmp_sysLocation,"\""," "));
-			$device["snmp_sysLocation"] = $snmp_sysLocation;
-		}
-		/* get system contact */
-		$snmp_sysContact = @cacti_snmp_get($device['ip'], $device['snmp_community'],
-					'.1.3.6.1.2.1.1.4.0', $device['snmp_version'],
-					$device['snmp_username'], $device['snmp_password'], $device['snmp_auth_protocol'], $device['snmp_priv_passphrase'], $device['snmp_priv_protocol'], $device['snmp_context'],
-					$device['snmp_port'], $device['snmp_timeout']);
-
-		if (strlen($snmp_sysContact) > 0) {
-			$snmp_sysContact = trim(strtr($snmp_sysContact,"\""," "));
-			$device["snmp_sysContact"] = $snmp_sysContact;
-		}
-		/* get system description */
-		$snmp_sysDescr = @cacti_snmp_get($device['ip'], $device['snmp_community'],
-					'.1.3.6.1.2.1.1.1.0', $device['snmp_version'],
-					$device['snmp_username'], $device['snmp_password'], $device['snmp_auth_protocol'], $device['snmp_priv_passphrase'], $device['snmp_priv_protocol'], $device['snmp_context'],
-					$device['snmp_port'], $device['snmp_timeout']);
-
-		if (strlen($snmp_sysDescr) > 0) {
-			$snmp_sysDescr = trim(strtr($snmp_sysDescr,"\""," "));
-			$device["snmp_sysDescr"] = $snmp_sysDescr;
-		}
-		/* get system uptime */
-		$snmp_sysUptime = @cacti_snmp_get($device['ip'], $device['snmp_community'],
-					'.1.3.6.1.2.1.1.3.0', $device['snmp_version'],
-					$device['snmp_username'], $device['snmp_password'], $device['snmp_auth_protocol'], $device['snmp_priv_passphrase'], $device['snmp_priv_protocol'], $device['snmp_context'],
-					$device['snmp_port'], $device['snmp_timeout']);
-
-		if (strlen($snmp_sysUptime) > 0) {
-			$snmp_sysUptime = trim(strtr($snmp_sysUptime,"\""," "));
-			$device["snmp_sysUptime"] = $snmp_sysUptime;
-		}
+		dpdiscover_get_snmp_values($device);
 	}
-
 	return $host_up;
+}
+
+function dpdiscover_get_snmp_values(&$device) {
+	/* get system name */
+	$snmp_sysName = @cacti_snmp_get($device['ip'], $device['snmp_community'],
+				'.1.3.6.1.2.1.1.5.0', $device['snmp_version'],
+				$device['snmp_username'], $device['snmp_password'], $device['snmp_auth_protocol'], $device['snmp_priv_passphrase'], $device['snmp_priv_protocol'], $device['snmp_context'],
+				$device['snmp_port'], $device['snmp_timeout']);
+
+	if (strlen($snmp_sysName) > 0) {
+		$snmp_sysName = trim(strtr($snmp_sysName,"\""," "));
+		$device["snmp_sysName"] = $snmp_sysName;
+	}
+	/* get system location */
+	$snmp_sysLocation = @cacti_snmp_get($device['ip'], $device['snmp_community'],
+				'.1.3.6.1.2.1.1.6.0', $device['snmp_version'],
+				$device['snmp_username'], $device['snmp_password'], $device['snmp_auth_protocol'], $device['snmp_priv_passphrase'], $device['snmp_priv_protocol'], $device['snmp_context'],
+				$device['snmp_port'], $device['snmp_timeout']);
+
+	if (strlen($snmp_sysLocation) > 0) {
+		$snmp_sysLocation = trim(strtr($snmp_sysLocation,"\""," "));
+		$device["snmp_sysLocation"] = $snmp_sysLocation;
+	}
+	/* get system contact */
+	$snmp_sysContact = @cacti_snmp_get($device['ip'], $device['snmp_community'],
+				'.1.3.6.1.2.1.1.4.0', $device['snmp_version'],
+				$device['snmp_username'], $device['snmp_password'], $device['snmp_auth_protocol'], $device['snmp_priv_passphrase'], $device['snmp_priv_protocol'], $device['snmp_context'],
+				$device['snmp_port'], $device['snmp_timeout']);
+
+	if (strlen($snmp_sysContact) > 0) {
+		$snmp_sysContact = trim(strtr($snmp_sysContact,"\""," "));
+		$device["snmp_sysContact"] = $snmp_sysContact;
+	}
+	/* get system description */
+	$snmp_sysDescr = @cacti_snmp_get($device['ip'], $device['snmp_community'],
+				'.1.3.6.1.2.1.1.1.0', $device['snmp_version'],
+				$device['snmp_username'], $device['snmp_password'], $device['snmp_auth_protocol'], $device['snmp_priv_passphrase'], $device['snmp_priv_protocol'], $device['snmp_context'],
+				$device['snmp_port'], $device['snmp_timeout']);
+
+	if (strlen($snmp_sysDescr) > 0) {
+		$snmp_sysDescr = trim(strtr($snmp_sysDescr,"\""," "));
+		$device["snmp_sysDescr"] = $snmp_sysDescr;
+	}
+	/* get system uptime */
+	$snmp_sysUptime = @cacti_snmp_get($device['ip'], $device['snmp_community'],
+				'.1.3.6.1.2.1.1.3.0', $device['snmp_version'],
+				$device['snmp_username'], $device['snmp_password'], $device['snmp_auth_protocol'], $device['snmp_priv_passphrase'], $device['snmp_priv_protocol'], $device['snmp_context'],
+				$device['snmp_port'], $device['snmp_timeout']);
+
+	if (strlen($snmp_sysUptime) > 0) {
+		$snmp_sysUptime = trim(strtr($snmp_sysUptime,"\""," "));
+		$device["snmp_sysUptime"] = $snmp_sysUptime;
+	}
 }
 
 function is_ipv4($address) {
