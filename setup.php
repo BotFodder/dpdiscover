@@ -122,7 +122,7 @@ function dpdiscover_check_upgrade () {
 function plugin_dpdiscover_version () {
 	return array(
 		'name'     => 'dpdiscover',
-		'version'  => '1.29',
+		'version'  => '1.30',
 		'longname' => 'DP Discover',
 		'author'   => 'Eric Stewart',
 		'homepage' => 'http://runningoffatthemouth.com/?p=1067',
@@ -133,7 +133,7 @@ function plugin_dpdiscover_version () {
 
 function dpdiscover_utilities_action ($action) {
 	if ($action == 'dpdiscover_clear') {
-		mysql_query('DELETE FROM plugin_dpdiscover_hosts');
+		db_execute('DELETE FROM plugin_dpdiscover_hosts');
 
 		include_once('./include/top_header.php');
 		utilities();
