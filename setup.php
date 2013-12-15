@@ -63,7 +63,6 @@ function dpdiscover_check_upgrade () {
 	global $config, $database_default;
 	include_once($config["library_path"] . "/database.php");
 	include_once($config["library_path"] . "/functions.php");
-	cacti_log("DPDiscover check upgrade running\n");
 
 	// Let's only run this check if we are on a page that actually needs the data
 	$files = array('plugins.php', 'dpdiscover.php', 'dpdiscover_template.php', 'findhosts.php');
@@ -78,6 +77,7 @@ function dpdiscover_check_upgrade () {
 		$old = 0.0;
 	}
 	if ($current != $old) {
+		cacti_log("DPDiscover check upgrade running\n");
 		$dpdiscover_columns = array_rekey(db_fetch_assoc("SHOW COLUMNS FROM plugin_dpdiscover_hosts"), "Field", "Field");
 		if (!in_array("snmp_version", $dpdiscover_columns)) {
 			db_execute("ALTER TABLE plugin_dpdiscover_hosts ADD COLUMN snmp_version tinyint(1) unsigned NOT NULL DEFAULT '1' AFTER community");
