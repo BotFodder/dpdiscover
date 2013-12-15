@@ -104,8 +104,8 @@ function dpdiscover_check_upgrade () {
 			db_execute("ALTER TABLE plugin_dpdiscover_hosts ADD COLUMN lastseen timestamp NOT NULL AFTER port");
 		}
 		$uptime = db_fetch_assoc("SHOW COLUMNS FROM plugin_dpdiscover_hosts WHERE Field='sysUptime'");
-		if($uptime[0]['Type'] == 'int(32)') {
-			db_execute("ALTER TABLE plugin_dpdiscover_hosts MODIFY COLUMN sysUptime int(64) NOT NULL DEFAULT 0");
+		if($uptime[0]['Type'] != 'bigint(64)') {
+			db_execute("ALTER TABLE plugin_dpdiscover_hosts MODIFY COLUMN sysUptime bigint(64) NOT NULL DEFAULT 0");
 		}
 
 		// Set the new version
