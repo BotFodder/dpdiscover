@@ -37,6 +37,19 @@ existing hosts via SNMP, and attempts to add unknown equipment to Cacti.
 
 ----[ Changelog
 
+    --- 1.30 ---
+    - Report page touched up a bit - Uptime code refined.  "last seen" value
+      added.
+    - "Clean out report database table" function fixed - wasn't mysqli
+      compatible too.
+    - Change to sysUptime table storage from int(32) to bigint(64) to store
+      larger values.  Systems with more than 230 days runtime were not showing
+      up properly.
+    - SNMP values for Uptime, Location, etc. on report page should now be
+      available for all known, added, and systems with identifiable SNMP
+      values, but no compatible template.
+    - Error on dpdiscover.php patched - I bungled an index value.
+
     --- 1.26 ---
     - The FDP setting had been removed somewhere along the line; added it back.
     - There was a 1.1, 1.2, and 1.25 before this that introduced some
