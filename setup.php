@@ -122,7 +122,7 @@ function dpdiscover_check_upgrade () {
 function plugin_dpdiscover_version () {
 	return array(
 		'name'     => 'dpdiscover',
-		'version'  => '1.30',
+		'version'  => '1.40',
 		'longname' => 'DP Discover',
 		'author'   => 'Eric Stewart',
 		'homepage' => 'http://runningoffatthemouth.com/?p=1067',
@@ -270,6 +270,11 @@ function dpdiscover_config_settings () {
 		'dpdiscover_include_skipped' => array(
 			'friendly_name' => "Include Skipped Hosts",
 			'description' => "When emailing the report, include a list of hosts discovered but excluded because of \"Exclude Host Filters\" above.",
+			'method' => 'checkbox',
+			),
+		'dpdiscover_fdp_try_v1' => array(
+			'friendly_name' => "Try SNMPv1 for FDP",
+			'description' => "There's an issue that causes timeouts when walking some Brocade devices, and they may fail to report their FDP information via SNMP appropriately when using SNMPv2.  If while using SNMPv2c during detection, nothing is detected for LLDP, CDP, and FDP, should DPDiscover try the FDP scan a second time with SNMPv1?",
 			'method' => 'checkbox',
 			),
 	);

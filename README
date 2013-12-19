@@ -4,7 +4,7 @@
     Contact ........ eric@ericdives.com
     Home Site ...... http://runningoffatthemouth.com
     Program ........ DP Discover
-    Version ........ 1.26
+    Version ........ 1.40
     Purpose ........ Find Network Equipment Using Discovery Protocols
 
 *******************************************************************************/
@@ -22,6 +22,8 @@ existing hosts via SNMP, and attempts to add unknown equipment to Cacti.
 	Displays SNMP Status and Information
 	Link to add device to Cacti.
 	Allows Discovery Templates to allow adding the device to Cacti
+	Detects and corrects IP changes
+	Detects and corrects name changes
 
 ----[ Installation
 
@@ -36,6 +38,19 @@ existing hosts via SNMP, and attempts to add unknown equipment to Cacti.
 
 
 ----[ Changelog
+
+    --- 1.40 ---
+    - Added code to detect a name change; if a discovery protocol reports a
+      name that resolves to an IP, and the name is not found in the known
+      devices but the IP is, the discovered name will replace the name of the
+      known device.
+    - Some Brocade devices (and possibly others, but in the development
+      environment, it was only noticed on Brocades) will not "walk" properly
+      (due to get_bulk_request) via SNMPv2 - hence, they will not report their
+      neighboring devices.  Optional code (see "Settings" for DPDiscover) was
+      written that will (if a device fails via LLDP, CDP, and FDP) rewalk a
+      device via FDP and SNMPv1 (FDP must be 'on', LLDP and CDP not required
+      to be 'on').
 
     --- 1.30 ---
     - Report page touched up a bit - Uptime code refined.  "last seen" value

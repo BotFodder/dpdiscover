@@ -382,17 +382,33 @@ $dpdiscovered['dphost'][$shortsearch]['device_threads']
 	$use_lldp = read_config_option("dpdiscover_use_lldp");
 	$use_cdp = read_config_option("dpdiscover_use_cdp");
 	$use_fdp = read_config_option("dpdiscover_use_fdp");
+	$lldpfail = TRUE;
+	$cdpfail = TRUE;
+	$fdpfail = TRUE;
 	if ($use_lldp == "on" && FALSE !== ($lldparray = LLDP_Discovery($search[$sidx]))) {
 //		print "$sidx We may have things we need to search ".sizeof($dparray)."\n";
 		$dparray = array_merge($dparray, $lldparray);
+		$lldpfail = FALSE;
 	}
 	if($use_cdp == "on" && FALSE !== ($cdparray = CDP_Discovery($search[$sidx]))) {
 //		print "$sidx CDP Found stuff instead. ".sizeof($dparray)."\n";
 		$dparray = array_merge($dparray, $cdparray);
+		$cdpfail = FALSE;
 	}
 	if($use_fdp == "on" && FALSE !== ($fdparray = FDP_Discovery($search[$sidx]))) {
 		dpdiscover_debug("$sidx FDP Found stuff instead. ".sizeof($dparray)."\n");
 		$dparray = array_merge($dparray, $fdparray);
+		$fdpfail = FALSE;
+	}
+	if($use_fdp == "on" && read_config_option("dpdiscover_fdp_try_v1") == "on" &&
+	   $lldpfail === TRUE && $cdpfail === TRUE && $fdpfail === TRUE &&
+	   $search[$sidx]['snmp_version'] == 2) {
+		$search[$sidx]['snmp_version'] = 1;
+		dpdiscover_debug($search[$sidx]['description'].": Punting to v1\n");
+		if(FALSE !== ($fdparray = FDP_Discovery($search[$sidx]))) {
+			$dparray = array_merge($dparray, $fdparray);
+		}
+		$search[$sidx]['snmp_version'] = 2;
 	}
 	if(sizeof($dparray) < 1) {
 		dpdiscover_debug("$sidx Nothing Found.\n");
@@ -475,11 +491,18 @@ if (isset($dpdiscovered['dphost'])) {
 	$found = "\nREPORT: Has IP, but not added:\n\n";
 	$skipped = "\nDevices Excluded:\n\n";
 	foreach($dpdiscovered['dphost'] as $host => $device) {
+		if(isset($device['newname'])) {
+			dpdiscover_debug("Skipping ".$host." = ".$device['newname']."\n");
+			continue;
+		}
 		if(!isset($device['parent'])) {
 			$device['parent'] = '';
 		}
 		if(!isset($device['port'])) {
 			$device['port'] = '';
+		}
+		if(isset($device['oldname'])) {
+			$ipchange .= "Changed ".$device['description']." name from ".$device['oldname']."\n";
 		}
 		if(isset($device['oldip'])) {
 			$ipchange .= "Changed ".$device['description']." IP from ".$device['oldip']." to ".$device['ip']."\n";
@@ -564,6 +587,91 @@ if (isset($dpdiscovered['dphost'])) {
 
 exit;
 
+function DPChange_Name($newname) {
+	global $dpdiscovered, $debug;
+
+	if(check_exclusion($newname['description'])) {
+		return;
+	}
+	dpdiscover_debug("Name Change? ".$newname['ip']." ".$newname['description']." but known: ".$dpdiscovered['ip'][$newname['ip']]."\n");
+	// Store the old one
+	$oldname = $dpdiscovered['ip'][$newname['ip']];
+	$dpdiscovered['dphost'][$newname['description']] = $dpdiscovered['dphost'][$oldname];
+	$dpdiscovered['dphost'][$newname['description']]['hostname'] = $newname['hostname'];
+	$dpdiscovered['dphost'][$newname['description']]['description']  = $newname['description'];
+	$dpdiscovered['ip'][$newname['ip']] = $newname['description'];
+	$dpdiscovered['dphost'][$newname['description']]['oldname'] = $oldname;
+	$dpdiscovered['dphost'][$oldname]['newname'] = $newname['description'];
+	$use_ip_for_hostname = read_config_option("dpdiscover_use_ip_hostname");
+	$use_fqdn_for_descr  = read_config_option("dpdiscover_use_fqdn_for_description");
+	if($use_fqdn_for_descr == "on") {
+		$description = $dpdiscovered['dphost'][$newname['description']]['hostname'];
+	}else{
+		$description = $newname['description'];
+	}
+	if($use_ip_for_hostname == "on") {
+		$hostname = $dpdiscovered['dphost'][$newname['description']]['ip'];
+	}else{
+		$hostname = $newname['hostname'];
+		if(is_ipv6($device['ip'])) {
+			$hostname = "udp6:$hostname";
+		}
+	}
+	if($debug === FALSE) {
+		api_device_save(
+			$dpdiscovered['dphost'][$newname['description']]['id'],
+			$dpdiscovered['dphost'][$newname['description']]['host_template_id'],
+			$dpdiscovered['dphost'][$newname['description']]['description'],
+			$dpdiscovered['dphost'][$newname['description']]['ip'],
+			$dpdiscovered['dphost'][$newname['description']]['snmp_community'],
+			$dpdiscovered['dphost'][$newname['description']]['snmp_version'],
+			$dpdiscovered['dphost'][$newname['description']]['snmp_username'],
+			$dpdiscovered['dphost'][$newname['description']]['snmp_password'],
+			$dpdiscovered['dphost'][$newname['description']]['snmp_port'],
+			$dpdiscovered['dphost'][$newname['description']]['snmp_timeout'],
+			$dpdiscovered['dphost'][$newname['description']]['disabled'],
+			$dpdiscovered['dphost'][$newname['description']]['availability_method'],
+			$dpdiscovered['dphost'][$newname['description']]['ping_method'],
+			$dpdiscovered['dphost'][$newname['description']]['ping_port'],
+			$dpdiscovered['dphost'][$newname['description']]['ping_timeout'],
+			$dpdiscovered['dphost'][$newname['description']]['ping_retries'],
+			"DPDiscover changed name from: ".$dpdiscovered['dphost'][$newname['description']]['oldname'],
+			$dpdiscovered['dphost'][$newname['description']]['snmp_auth_protocol'],
+			$dpdiscovered['dphost'][$newname['description']]['snmp_priv_passphrase'],
+			$dpdiscovered['dphost'][$newname['description']]['snmp_priv_protocol'],
+			$dpdiscovered['dphost'][$newname['description']]['snmp_context'],
+			$dpdiscovered['dphost'][$newname['description']]['max_oids'],
+			$dpdiscovered['dphost'][$newname['description']]['device_threads']
+		);
+	}else{
+		dpdiscover_debug("api_device_save: ".
+$dpdiscovered['dphost'][$newname['description']]['id']."\n".
+$dpdiscovered['dphost'][$newname['description']]['host_template_id']."\n".
+$dpdiscovered['dphost'][$newname['description']]['description']."\n".
+$dpdiscovered['dphost'][$newname['description']]['ip']."\n".
+$dpdiscovered['dphost'][$newname['description']]['snmp_community']."\n".
+$dpdiscovered['dphost'][$newname['description']]['snmp_version']."\n".
+$dpdiscovered['dphost'][$newname['description']]['snmp_username']."\n".
+$dpdiscovered['dphost'][$newname['description']]['snmp_password']."\n".
+$dpdiscovered['dphost'][$newname['description']]['snmp_port']."\n".
+$dpdiscovered['dphost'][$newname['description']]['snmp_timeout']."\n".
+$dpdiscovered['dphost'][$newname['description']]['disabled']."\n".
+$dpdiscovered['dphost'][$newname['description']]['availability_method']."\n".
+$dpdiscovered['dphost'][$newname['description']]['ping_method']."\n".
+$dpdiscovered['dphost'][$newname['description']]['ping_port']."\n".
+$dpdiscovered['dphost'][$newname['description']]['ping_timeout']."\n".
+$dpdiscovered['dphost'][$newname['description']]['ping_retries']."\n".
+"DPDiscover changed name from: ".$dpdiscovered['dphost'][$newname['description']]['oldname']."\n".
+$dpdiscovered['dphost'][$newname['description']]['snmp_auth_protocol']."\n".
+$dpdiscovered['dphost'][$newname['description']]['snmp_priv_passphrase']."\n".
+$dpdiscovered['dphost'][$newname['description']]['snmp_priv_protocol']."\n".
+$dpdiscovered['dphost'][$newname['description']]['snmp_context']."\n".
+$dpdiscovered['dphost'][$newname['description']]['max_oids']."\n".
+$dpdiscovered['dphost'][$newname['description']]['device_threads']."\n");
+		dpdiscover_debug($oldname." would become ".$newname['description']."\n");
+	}
+}
+
 function LLDP_Discovery($searchme) {
 	global $dpdiscovered;
 	$lldpLocPortId_OID = ".1.0.8802.1.1.2.1.3.7.1.3";
@@ -624,16 +732,20 @@ $searchme['snmp_timeout'], $snmp_retries, $searchme['max_oids'], SNMP_POLLER);
 			}
 		}
 		if(!isset($dpdiscovered['dphost'][$lldpnames[$i]['description']])) {
-			$answer[] = $lldpnames[$i];
-			$dpdiscovered['dphost'][$lldpnames[$i]['description']] = $lldpnames[$i];
-			$dpdiscovered['dphost'][$lldpnames[$i]['description']]['protocol'] = "LLDP";
-			$dpdiscovered['dphost'][$lldpnames[$i]['description']]['parent'] = $lldphost;
-			$dpdiscovered['dphost'][$lldpnames[$i]['description']]['port'] = $lldpport;
-			$dpdiscovered['dphost'][$lldpnames[$i]['description']]['added'] = 0;
-			$dpdiscovered['hostname'][$lldpnames[$i]['hostname']] = $lldpnames[$i]['description'];
-			$dpdiscovered['description'][$lldpnames[$i]['description']] = $lldpnames[$i]['description'];
-			if(is_ipv4($lldpnames[$i]['ip']) || is_ipv6($lldpnames[$i]['ip'])) {
-				$dpdiscovered['ip'][$lldpnames[$i]['ip']] = $lldpnames[$i]['description'];
+			if(isset($dpdiscovered['ip'][$lldpnames[$i]['ip']])) {
+				DPChange_Name($lldpnames[$i]);
+			}else{
+$dpdiscovered['dphost'][$lldpnames[$i]['description']] = $lldpnames[$i];
+$dpdiscovered['dphost'][$lldpnames[$i]['description']]['protocol'] = "LLDP";
+$dpdiscovered['dphost'][$lldpnames[$i]['description']]['parent'] = $lldphost;
+$dpdiscovered['dphost'][$lldpnames[$i]['description']]['port'] = $lldpport;
+$dpdiscovered['dphost'][$lldpnames[$i]['description']]['added'] = 0;
+$dpdiscovered['hostname'][$lldpnames[$i]['hostname']] = $lldpnames[$i]['description'];
+$dpdiscovered['description'][$lldpnames[$i]['description']] = $lldpnames[$i]['description'];
+if(is_ipv4($lldpnames[$i]['ip']) || is_ipv6($lldpnames[$i]['ip'])) {
+	$dpdiscovered['ip'][$lldpnames[$i]['ip']] = $lldpnames[$i]['description'];
+}
+$answer[] = $lldpnames[$i];
 			}
 		}elseif (!isset($dpdiscovered['dphost'][$lldpnames[$i]['description']]['parent'])) {
 			dpdiscover_debug("Just adding parent - ".$lldpnames[$i]['description']." $lldphost $lldpport\n");
@@ -695,17 +807,21 @@ $searchme['snmp_timeout'], $snmp_retries, $searchme['max_oids'], SNMP_POLLER);
 			}
 		}
 		if(!isset($dpdiscovered['dphost'][$cdpnames[$i]['description']])) {
-			$dpdiscovered['dphost'][$cdpnames[$i]['description']] = $cdpnames[$i];
-			$dpdiscovered['dphost'][$cdpnames[$i]['description']]['protocol'] = "CDP";
-			$dpdiscovered['dphost'][$cdpnames[$i]['description']]['parent'] = $cdphost;
-			$dpdiscovered['dphost'][$cdpnames[$i]['description']]['port'] = $cdpport;
-			$dpdiscovered['dphost'][$cdpnames[$i]['description']]['added'] = 0;
-			$dpdiscovered['hostname'][$cdpnames[$i]['hostname']] = $cdpnames[$i]['description'];
-			$dpdiscovered['description'][$cdpnames[$i]['description']] = $cdpnames[$i]['description'];
-			if(is_ipv4($cdpnames[$i]['ip']) || is_ipv6($cdpnames[$i]['ip'])) {
-				$dpdiscovered['ip'][$cdpnames[$i]['ip']] = $cdpnames[$i]['description'];
+			if(isset($dpdiscovered['ip'][$cdpnames[$i]['ip']])) {
+				DPChange_Name($cdpnames[$i]);
+			}else{
+$dpdiscovered['dphost'][$cdpnames[$i]['description']] = $cdpnames[$i];
+$dpdiscovered['dphost'][$cdpnames[$i]['description']]['protocol'] = "CDP";
+$dpdiscovered['dphost'][$cdpnames[$i]['description']]['parent'] = $cdphost;
+$dpdiscovered['dphost'][$cdpnames[$i]['description']]['port'] = $cdpport;
+$dpdiscovered['dphost'][$cdpnames[$i]['description']]['added'] = 0;
+$dpdiscovered['hostname'][$cdpnames[$i]['hostname']] = $cdpnames[$i]['description'];
+$dpdiscovered['description'][$cdpnames[$i]['description']] = $cdpnames[$i]['description'];
+if(is_ipv4($cdpnames[$i]['ip']) || is_ipv6($cdpnames[$i]['ip'])) {
+	$dpdiscovered['ip'][$cdpnames[$i]['ip']] = $cdpnames[$i]['description'];
+}
+$answer[] = $cdpnames[$i];
 			}
-			$answer[] = $cdpnames[$i];
 		}elseif (!isset($dpdiscovered['dphost'][$cdpnames[$i]['description']]['parent'])) {
 			dpdiscover_debug("Just adding parent - ".$cdpnames[$i]['description']." $cdphost $cdpport\n");
 			$dpdiscovered['dphost'][$cdpnames[$i]['description']]['parent'] = $cdphost;
@@ -756,17 +872,21 @@ $searchme['snmp_timeout'], $snmp_retries, $searchme['max_oids'], SNMP_POLLER);
 			return FALSE;
 		}
 		if(!isset($dpdiscovered['dphost'][$fdpnames[$i]['description']])) {
-			$dpdiscovered['dphost'][$fdpnames[$i]['description']] = $fdpnames[$i];
-			$dpdiscovered['dphost'][$fdpnames[$i]['description']]['protocol'] = "FDP";
-			$dpdiscovered['dphost'][$fdpnames[$i]['description']]['parent'] = $fdphost;
-			$dpdiscovered['dphost'][$fdpnames[$i]['description']]['port'] = $fdpport;
-			$dpdiscovered['dphost'][$fdpnames[$i]['description']]['added'] = 0;
-			$dpdiscovered['hostname'][$fdpnames[$i]['hostname']] = $fdpnames[$i]['description'];
-			$dpdiscovered['description'][$fdpnames[$i]['description']] = $fdpnames[$i]['description'];
-			if(is_ipv4($fdpnames[$i]['ip']) || is_ipv6($fdpnames[$i]['ip'])) {
-				$dpdiscovered['ip'][$fdpnames[$i]['ip']] = $fdpnames[$i]['description'];
+			if(isset($dpdiscovered['ip'][$fdpnames[$i]['ip']])) {
+				DPChange_Name($fdpnames[$i]);
+			}else{
+$dpdiscovered['dphost'][$fdpnames[$i]['description']] = $fdpnames[$i];
+$dpdiscovered['dphost'][$fdpnames[$i]['description']]['protocol'] = "FDP";
+$dpdiscovered['dphost'][$fdpnames[$i]['description']]['parent'] = $fdphost;
+$dpdiscovered['dphost'][$fdpnames[$i]['description']]['port'] = $fdpport;
+$dpdiscovered['dphost'][$fdpnames[$i]['description']]['added'] = 0;
+$dpdiscovered['hostname'][$fdpnames[$i]['hostname']] = $fdpnames[$i]['description'];
+$dpdiscovered['description'][$fdpnames[$i]['description']] = $fdpnames[$i]['description'];
+if(is_ipv4($fdpnames[$i]['ip']) || is_ipv6($fdpnames[$i]['ip'])) {
+	$dpdiscovered['ip'][$fdpnames[$i]['ip']] = $fdpnames[$i]['description'];
+}
+$answer[] = $fdpnames[$i];
 			}
-			$answer[] = $fdpnames[$i];
 		}elseif (!isset($dpdiscovered['dphost'][$fdpnames[$i]['description']]['parent'])) {
 			dpdiscover_debug("Just adding parent - ".$fdpnames[$i]['description']." $fdphost $fdpport\n");
 			$dpdiscovered['dphost'][$fdpnames[$i]['description']]['parent'] = $fdphost;
