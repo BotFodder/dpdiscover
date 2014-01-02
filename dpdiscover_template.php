@@ -20,6 +20,8 @@
  +-------------------------------------------------------------------------+
  | http://www.cacti.net/                                                   |
  +-------------------------------------------------------------------------+
+
+ Changes for DPDiscover: Eric Stewart - eric@usf.edu/eric@ericdives.com
 */
 
 chdir('../../');
@@ -69,7 +71,6 @@ function form_save() {
 
 		$save["id"] = $_POST["id"];
 		$save["host_template"] = form_input_validate($_POST["host_template"], "host_template", "", false, 3);
-//		$save["snmp_version"] = form_input_validate($_POST["snmp_version"], "snmp_version", "", false, 3);
 		$save["sysdescr"] = sql_sanitize($_POST["sysdescr"]);
 
 		if (!is_error_message()) {
@@ -186,15 +187,6 @@ function template_edit() {
 			"value" => "|arg1:host_template|",
 			"array" => $template_names,
 			),
-/*		"snmp_version" => array(
-			"method" => "drop_array",
-			"friendly_name" => "SNMP Version",
-			"description" => "Choose the SNMP version for this host.",
-			"value" => "|arg1:snmp_version|",
-			"default" => read_config_option("snmp_ver"),
-			"array" => $snmp_versions,
-			),
-*/
 		"sysdescr" => array(
 			"method" => "textbox",
 			"friendly_name" => "System Description",

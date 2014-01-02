@@ -13,31 +13,27 @@
  *
  * All tree and graph creation logic removed.  Suggest you use autom8 to
  * perform those functions.
- *
- * May want to extend this to pull CDP and FDP information, as some equipment
- * may not have LLDP turned on (!).
- * Well ... I'll do what I can to make this easy to extend ...
 */
 /* Original Copyright:
  +-------------------------------------------------------------------------+
- | Copyright (C) 2004-2011 The Cacti Group				 |
- |									 |
- | This program is free software; you can redistribute it and/or	   |
- | modify it under the terms of the GNU General Public License	     |
- | as published by the Free Software Foundation; either version 2	  |
- | of the License, or (at your option) any later version.		  |
- |									 |
- | This program is distributed in the hope that it will be useful,	 |
- | but WITHOUT ANY WARRANTY; without even the implied warranty of	  |
- | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the	   |
- | GNU General Public License for more details.			    |
+ | Copyright (C) 2004-2011 The Cacti Group                                 |
+ |                                                                         |
+ | This program is free software; you can redistribute it and/or           |
+ | modify it under the terms of the GNU General Public License             |
+ | as published by the Free Software Foundation; either version 2          |
+ | of the License, or (at your option) any later version.                  |
+ |                                                                         |
+ | This program is distributed in the hope that it will be useful,         |
+ | but WITHOUT ANY WARRANTY; without even the implied warranty of          |
+ | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           |
+ | GNU General Public License for more details.                            |
  +-------------------------------------------------------------------------+
- | Cacti: The Complete RRDTool-based Graphing Solution		     |
+ | Cacti: The Complete RRDTool-based Graphing Solution                     |
  +-------------------------------------------------------------------------+
  | This code is designed, written, and maintained by the Cacti Group. See  |
  | about.php and/or the AUTHORS file for specific developer information.   |
  +-------------------------------------------------------------------------+
- | http://www.cacti.net/						   |
+ | http://www.cacti.net/                                                   |
  +-------------------------------------------------------------------------+
 */
 
@@ -296,6 +292,10 @@ foreach($known_hosts as $host) {
 
 $sysObjectID_OID = ".1.3.6.1.2.1.1.2.0";
 $sidx = 0;
+/* We loop through "search" using a while, as more items may be added to the 
+ * loop as we proceed through it.  This *should* ensure that even new items
+ * are searched for children.
+*/
 while(isset($search[$sidx])) {
 	$shortsearch = get_shorthost($search[$sidx]['description']);
 	if(check_exclusion($shortsearch)) {
@@ -315,6 +315,7 @@ $search[$sidx]['snmp_version'], $search[$sidx]['snmp_username'], $search[$sidx][
 $search[$sidx]['snmp_auth_protocol'], $search[$sidx]['snmp_priv_passphrase'],
 $search[$sidx]['snmp_priv_protocol'], $search[$sidx]['snmp_context'], $search[$sidx]['snmp_port'],
 $search[$sidx]['snmp_timeout'], $snmp_retries, $search[$sidx]['max_oids'], SNMP_POLLER);
+	// If we can't find it and it's a known device, then we try to fix it.
 	if (!isset($sysObjectID) || $sysObjectID == "") {
 		dpdiscover_debug("$sidx FAILED sysObjectID for ".$dpdiscovered['dphost'][$shortsearch]['ip']."\n");
 		// Should we fix it?
@@ -329,6 +330,7 @@ $search[$sidx]['snmp_version'], $search[$sidx]['snmp_username'], $search[$sidx][
 $search[$sidx]['snmp_auth_protocol'], $search[$sidx]['snmp_priv_passphrase'],
 $search[$sidx]['snmp_priv_protocol'], $search[$sidx]['snmp_context'], $search[$sidx]['snmp_port'],
 $search[$sidx]['snmp_timeout'], $snmp_retries, $search[$sidx]['max_oids'], SNMP_POLLER);
+	// Can't find it via SNMP - give up.
 	if (!isset($sysObjectID) || $sysObjectID == "") {
 		$sidx++;
 		continue;
@@ -385,21 +387,23 @@ $dpdiscovered['dphost'][$shortsearch]['device_threads']
 	$lldpfail = TRUE;
 	$cdpfail = TRUE;
 	$fdpfail = TRUE;
+	// Try LLDP
 	if ($use_lldp == "on" && FALSE !== ($lldparray = LLDP_Discovery($search[$sidx]))) {
-//		print "$sidx We may have things we need to search ".sizeof($dparray)."\n";
 		$dparray = array_merge($dparray, $lldparray);
 		$lldpfail = FALSE;
 	}
+	// Try CDP
 	if($use_cdp == "on" && FALSE !== ($cdparray = CDP_Discovery($search[$sidx]))) {
-//		print "$sidx CDP Found stuff instead. ".sizeof($dparray)."\n";
 		$dparray = array_merge($dparray, $cdparray);
 		$cdpfail = FALSE;
 	}
+	// Try FDP
 	if($use_fdp == "on" && FALSE !== ($fdparray = FDP_Discovery($search[$sidx]))) {
 		dpdiscover_debug("$sidx FDP Found stuff instead. ".sizeof($dparray)."\n");
 		$dparray = array_merge($dparray, $fdparray);
 		$fdpfail = FALSE;
 	}
+	// Try FDP again but now via SNMPv1, if nothing else worked
 	if($use_fdp == "on" && read_config_option("dpdiscover_fdp_try_v1") == "on" &&
 	   $lldpfail === TRUE && $cdpfail === TRUE && $fdpfail === TRUE &&
 	   $search[$sidx]['snmp_version'] == 2) {
@@ -410,6 +414,8 @@ $dpdiscovered['dphost'][$shortsearch]['device_threads']
 		}
 		$search[$sidx]['snmp_version'] = 2;
 	}
+	// Either we know about everything connected to this device or we
+	// can't figure out what's connected to this device.
 	if(sizeof($dparray) < 1) {
 		dpdiscover_debug("$sidx Nothing Found.\n");
 		$sidx++;
@@ -418,6 +424,7 @@ $dpdiscovered['dphost'][$shortsearch]['device_threads']
 	$snmp_version = read_config_option("snmp_ver");
 	$snmp_port    = read_config_option("snmp_port");
 	$snmp_timeout = read_config_option("snmp_timeout");
+	// Loop through the new things we've discovered and try to add them.
 	foreach($dparray as $pdevice) {
 		$pdevice['snmp_status'] = 0;
 		$pdevice['ip'] = $dpdiscovered['dphost'][$pdevice['description']]['ip'];
@@ -442,6 +449,7 @@ $dpdiscovered['dphost'][$shortsearch]['device_threads']
 		if(!isset($pdevice['max_oids'])) {
 			$pdevice['max_oids'] = 10;
 		}
+		// Verify IP validity and make sure we aren't supposed to ignore it.
 		if((is_ipv4($dpdiscovered['dphost'][$pdevice['description']]['ip']) ||
 		   is_ipv6($dpdiscovered['dphost'][$pdevice['description']]['ip'])) &&
 		   check_exclusion($pdevice['description']) === FALSE) {
@@ -518,6 +526,7 @@ if (isset($dpdiscovered['dphost'])) {
 				$found .= $device['description']." - ".$device['ip']." FOUND VIA: ".$device['parent']." - ".$device['port']."\n";
 			}
 		}
+		// Dump into a database table to check things out.
 		if($debug === FALSE) {
 			db_execute("REPLACE INTO plugin_dpdiscover_hosts (hostname, ip, snmp_community, snmp_version, snmp_username, snmp_password, snmp_auth_protocol, snmp_priv_passphrase, snmp_priv_protocol, snmp_context, sysName, sysLocation, sysContact, sysDescr, sysUptime, os, added, snmp_status, time, protocol, parent, port, lastseen) VALUES ('"
 . sql_sanitize($device['hostname'])."', '"
@@ -543,33 +552,6 @@ if (isset($dpdiscovered['dphost'])) {
 . sql_sanitize($device['parent']) ."', '"
 . sql_sanitize($device['port']) ."',"
 . "NOW())" );
-/*
-		}else{
-			dpdiscover_debug("REPLACE INTO plugin_dpdiscover_hosts (hostname, ip, snmp_community, snmp_version, snmp_username, snmp_password, snmp_auth_protocol, snmp_priv_passphrase, snmp_priv_protocol, snmp_context, sysName, sysLocation, sysContact, sysDescr, sysUptime, os, added, snmp_status, time, protocol, parent, port) VALUES ('"
-. sql_sanitize($device['hostname'])."', '"
-. sql_sanitize($device['ip'])."', '"
-. sql_sanitize($device['snmp_community']) . "', "
-. sql_sanitize($device['snmp_version']) . ", '"
-. sql_sanitize($device['snmp_username']) . "', '"
-. sql_sanitize($device['snmp_password']) . "', '"
-. sql_sanitize($device['snmp_auth_protocol']) . "', '"
-. sql_sanitize($device['snmp_priv_passphrase']) . "', '"
-. sql_sanitize($device['snmp_priv_protocol']) . "', '"
-. sql_sanitize($device['snmp_context']) . "', '"
-. sql_sanitize($device['snmp_sysName']) . "', '"
-. sql_sanitize($device['snmp_sysLocation']) . "', '"
-. sql_sanitize($device['snmp_sysContact']) . "', '"
-. sql_sanitize($device['snmp_sysDescr']) . "', '"
-. sql_sanitize($device['snmp_sysUptime']) . "', '"
-. sql_sanitize($device['os']) . "', "
-. $device['added'] .", "
-. $device['snmp_status'] .", "
-. time() .", '"
-. sql_sanitize($device['protocol']) ."', '"
-. sql_sanitize($device['parent']) ."', '"
-. sql_sanitize($device['port']) ."'"
-. ")\n" );
-*/
 		}
 	}
 	if(filter_var($send_report_to, FILTER_VALIDATE_EMAIL)) {
@@ -587,6 +569,7 @@ if (isset($dpdiscovered['dphost'])) {
 
 exit;
 
+// Found a device that has a name we don't know but an IP we do?
 function DPChange_Name($newname) {
 	global $dpdiscovered, $debug;
 
@@ -672,6 +655,7 @@ $dpdiscovered['dphost'][$newname['description']]['device_threads']."\n");
 	}
 }
 
+// LLDP Discovery
 function LLDP_Discovery($searchme) {
 	global $dpdiscovered;
 	$lldpLocPortId_OID = ".1.0.8802.1.1.2.1.3.7.1.3";
@@ -700,8 +684,6 @@ $searchme['max_oids'], SNMP_POLLER);
 			continue;
 		}
 		if(isset($dpdiscovered['dphost'][$lldpnames[$i]['description']]['parent'])) {
-			// Already know.
-//			dpdiscover_debug("We know about ".$lldpnames[$i]['description']." - ".$dpdiscovered['dphost'][$lldpnames[$i]['description']]['parent']."\n");
 			continue;
 		}
 		$lldpport = cacti_snmp_get($dpdiscovered['dphost'][$lldphost]['ip'],
@@ -756,6 +738,7 @@ $answer[] = $lldpnames[$i];
 	return $answer;
 }
 
+// Try CDP.
 function CDP_Discovery($searchme) {
 	global $dpdiscovered;
 
@@ -784,8 +767,6 @@ $searchme['max_oids'], SNMP_POLLER);
 			continue;
 		}
 		if (isset($dpdiscovered['dphost'][$cdpnames[$i]['description']]['parent'])) {
-			// We already know what we want to know.
-//			dpdiscover_debug("Already know about ".$cdpnames[$i]['description']. " - ".$dpdiscovered['dphost'][$cdpnames[$i]['description']]['parent']."\n");
 			continue;
 		}
 		$cdpport = cacti_snmp_get($dpdiscovered['dphost'][$cdphost]['ip'],
@@ -831,6 +812,7 @@ $answer[] = $cdpnames[$i];
 	return $answer;
 }
 
+// Try FDP
 function FDP_Discovery($searchme) {
 	global $dpdiscovered;
 
@@ -858,8 +840,6 @@ $searchme['max_oids'], SNMP_POLLER);
 			continue;
 		}
 		if (isset($dpdiscovered['dphost'][$fdpnames[$i]['description']]['parent'])) {
-			// We already know what we want to know.
-//			dpdiscover_debug("Already know about ".$fdpnames[$i]['description']. " - ".$dpdiscovered['dphost'][$fdpnames[$i]['description']]['parent']."\n");
 			continue;
 		}
 		$fdpport = cacti_snmp_get($dpdiscovered['dphost'][$fdphost]['ip'],
@@ -896,6 +876,7 @@ $answer[] = $fdpnames[$i];
 	return $answer;
 }
 
+// Add the device
 function dpdiscover_add_device ($device) {
 	global $plugins, $config, $dpdiscovered, $debug;
 
@@ -948,11 +929,6 @@ function dpdiscover_add_device ($device) {
 		$host_id = 1;
 	}
 	$dpdiscovered['dphost'][$device['description']]['added'] = 1;
-/*
-	if ($host_id) {
-		db_execute("DELETE FROM plugin_dpdiscover_hosts WHERE ip = '$ip' LIMIT 1");
-	}
-*/
 	return $host_id;
 }
 
@@ -1195,7 +1171,6 @@ function is_ipv6($address) {
 		// Check for SNMP specification and brackets
 		if(preg_match("/udp6:\[(.*)\]/", $address, $matches) > 0 &&
 			filter_var($matches[1], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== FALSE) {
-//			dpdiscover_debug("Is IPv6: $address ".$matches[1]."\n");
 			return TRUE;
 		}
 		return FALSE;

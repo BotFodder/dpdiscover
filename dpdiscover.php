@@ -355,7 +355,6 @@ $display_text = array(
 	"time" => array("Uptime", "DESC"),
 	"snmp" => array("SNMP", "DESC"),
 	"lastseen" => array("Last Seen", "ASC"),
-//	"up" => array("Status", "ASC"),
 	"nosort" => array("", ""));
 
 html_header_sort($display_text, get_request_var_request("sort_column"), get_request_var_request("sort_direction"), false);
@@ -399,7 +398,6 @@ if (sizeof($result)) {
 			<td>' . $status[$row['snmp_status']] . '</td>
 			<td>' . $row['lastseen'] . '</td>
 			<td align="right">';
-//			<td>' . $status[$row['up']] . '</td>
 if ($row['protocol'] != "known" && $row['added'] != 1) {
 		print "<form style=\"padding:0px;margin:0px;\" method=\"post\" action=\"../../host.php\">
 			<input type=hidden name=save_component_host value=1>

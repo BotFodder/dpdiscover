@@ -177,15 +177,6 @@ function dpdiscover_config_settings () {
 			"max_length" => 255,
 			"default" => ""
 			),
-/*		"dpdiscover_protocol" => array(
-			"friendly_name" => "Ping Method",
-			"description" => "This is the type of protocol used by Ping to determine if the host is responding.
-			Once it pings, it will be scanned for snmp availability.",
-			"method" => "drop_array",
-			"array" => array(0 => 'UDP', 1 => 'TCP', 2 => 'ICMP'),
-			"default" => 0
-			),
-*/
 		'dpdiscover_use_parent_snmp' => array(
 			'friendly_name' => "Attempt Parent SNMP Values",
 			'description' => "As new devices are detected from existing devices (a 'parent'), check this box if the parent's SNMP values should be used in an attempt to pull information from the new device.",
