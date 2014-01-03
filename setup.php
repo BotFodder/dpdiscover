@@ -122,7 +122,7 @@ function dpdiscover_check_upgrade () {
 function plugin_dpdiscover_version () {
 	return array(
 		'name'     => 'dpdiscover',
-		'version'  => '1.40',
+		'version'  => '1.41',
 		'longname' => 'DP Discover',
 		'author'   => 'Eric Stewart',
 		'homepage' => 'http://runningoffatthemouth.com/?p=1067',
@@ -226,6 +226,12 @@ function dpdiscover_config_settings () {
 		'dpdiscover_fix_ip_hostname' => array(
 			'friendly_name' => "Fix IP For Hostname",
 			'description' => "If using the IP for the hostname in Cacti, should DPDiscover, if it cannot contact a known device via IP, check DNS to see if the IP has changed, and if so, update the IP?",
+			'method' => 'checkbox',
+			'default' => 'on',
+			),
+		'dpdiscover_fix_names' => array(
+			'friendly_name' => "Fix Names",
+			'description' => "While looking at discovery information from a device, DPDiscover looks up the IP for 'unknown' equipment.  If the discovered IP is in Cacti, the device with the IP is renamed to the discovered name.  However, if for some reason the device's reported hostname should not be considered authoritative, this should be unchecked.",
 			'method' => 'checkbox',
 			'default' => 'on',
 			),

@@ -4,7 +4,7 @@
     Contact ........ eric@ericdives.com
     Home Site ...... http://runningoffatthemouth.com
     Program ........ DP Discover
-    Version ........ 1.40
+    Version ........ 1.41
     Purpose ........ Find Network Equipment Using Discovery Protocols
 
 *******************************************************************************/
@@ -39,6 +39,8 @@ existing hosts via SNMP, and attempts to add unknown equipment to Cacti.
 
 ----[ Changelog
 
+    --- 1.41 ---
+    - Name change code modified to be optional - see settings.
     --- 1.40 ---
     - Added code to detect a name change; if a discovery protocol reports a
       name that resolves to an IP, and the name is not found in the known

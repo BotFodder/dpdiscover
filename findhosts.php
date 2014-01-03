@@ -573,7 +573,8 @@ exit;
 function DPChange_Name($newname) {
 	global $dpdiscovered, $debug;
 
-	if(check_exclusion($newname['description'])) {
+	if(check_exclusion($newname['description']) ||
+	   read_config_option("dpdiscover_fix_names") != "on") {
 		return;
 	}
 	dpdiscover_debug("Name Change? ".$newname['ip']." ".$newname['description']." but known: ".$dpdiscovered['ip'][$newname['ip']]."\n");
