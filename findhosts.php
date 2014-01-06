@@ -1219,12 +1219,19 @@ function get_shorthost($address) {
 	}
 }
 
+function expand_ipv6($ip) {
+	$hex = unpack("H*hex", inet_pton($ip));
+	$ip = substr(preg_replace("/([A-f0-9]{4})/", "$1:", $hex['hex']), 0, -1);
+	return $ip;
+}
+
 function get_ip($address) {
 	global $domain_name;
 	if(is_ipv4($address)) {
 		return $address;
 	}
 	if(is_ipv6_raw($address)) {
+		$address = expand_ipv6($address);
 		return "udp6:[$address]";
 	}
 	if(is_ipv6($address)) {
@@ -1244,6 +1251,7 @@ function get_ip($address) {
 			return "No DNS entry";
 		}else{
 			foreach($dns as $entry) {
+				$entry['ipv6'] = expand_ipv6($entry['ipv6']);
 				$ips[] = "udp6:[".$entry['ipv6']."]";
 			}
 		}
