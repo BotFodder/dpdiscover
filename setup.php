@@ -122,7 +122,7 @@ function dpdiscover_check_upgrade () {
 function plugin_dpdiscover_version () {
 	return array(
 		'name'     => 'dpdiscover',
-		'version'  => '1.41',
+		'version'  => '1.42',
 		'longname' => 'DP Discover',
 		'author'   => 'Eric Stewart',
 		'homepage' => 'http://runningoffatthemouth.com/?p=1067',
@@ -383,6 +383,7 @@ function dpdiscover_poller_bottom () {
 
 	include_once($config["library_path"] . "/database.php");
 
+	$now = time();
 	if (read_config_option("dpdiscover_collection_timing") == "disabled")
 		return;
 
@@ -394,7 +395,7 @@ function dpdiscover_poller_bottom () {
 		$poller_interval = 300;
 	}
 
-	if ($t != '' && (time() - $t < $poller_interval))
+	if ($t != '' && ($now - $t < $poller_interval))
 		return;
 
 	$command_string = trim(read_config_option("path_php_binary"));
@@ -407,10 +408,11 @@ function dpdiscover_poller_bottom () {
 	exec_background($command_string, $extra_args);
 
 	if ($t == "")
-		$sql = "insert into settings values ('dpdiscover_last_poll','" . time() . "')";
+		$sql = "insert into settings values ('dpdiscover_last_poll','" . $now . "')";
 	else
-		$sql = "update settings set value = '" . time() . "' where name = 'dpdiscover_last_poll'";
-	$result = mysql_query($sql) or die (mysql_error());
+		$sql = "update settings set value = '" . $now . "' where name = 'dpdiscover_last_poll'";
+/*	$result = mysql_query($sql) or die (mysql_error()); */
+	db_execute($sql);
 }
 
 function dpdiscover_copy_settings() {
@@ -421,7 +423,7 @@ function dpdiscover_copy_settings() {
 			if(preg_match("/dpdiscovery_(.*)$/", $setting['name'], $actuals) > 0) {
 				$newsetting = "dpdiscover_".$actuals[1];
 				$delete_sql = "DELETE FROM settings WHERE name='".$setting['name']."'";
-				$delete = mysql_query($delete_sql) or die (mysql_error());
+				db_execute($delete_sql);
 				db_execute("REPLACE INTO settings (name, value) VALUES ('".$newsetting."', '".$setting['value']."')");
 			}
 		}

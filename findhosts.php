@@ -253,6 +253,7 @@ $dpdiscovered = array();
 $search = $known_hosts;
 
 // Seed the relevant arrays with known information.
+dpdiscover_debug("Seeding array: ");
 foreach($known_hosts as $host) {
 // Might be short, might not.  Make sure and use it as key.
 	$dphost = get_shorthost($host['description']);
@@ -286,9 +287,11 @@ foreach($known_hosts as $host) {
 	}
 	if(is_ipv4($dpdiscovered['dphost'][$dphost]['ip']) ||
 	   is_ipv6($dpdiscovered['dphost'][$dphost]['ip'])) {
+		dpdiscover_debug($dphost." ");
 		dpdiscover_get_snmp_values($dpdiscovered['dphost'][$dphost]);
 	}
 }
+dpdiscover_debug("\n");
 
 $sysObjectID_OID = ".1.3.6.1.2.1.1.2.0";
 $sidx = 0;
