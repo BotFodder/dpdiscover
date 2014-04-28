@@ -203,7 +203,7 @@ $fix_ip_hostname = read_config_option("dpdiscover_fix_ip_hostname");
 cacti_log("DP Discover is now running", true, "POLLER");
 
 // Get array of snmp information.
-$known_hosts = db_fetch_assoc("SELECT id, host_template_id, description, hostname, snmp_community, snmp_version, snmp_username, snmp_password, snmp_port, snmp_timeout, disabled, availability_method, ping_method, ping_port, ping_timeout, ping_retries, snmp_auth_protocol, snmp_priv_passphrase, snmp_priv_protocol, snmp_context, max_oids, device_threads FROM host WHERE disabled!='on'");
+$known_hosts = db_fetch_assoc("SELECT id, host_template_id, description, hostname, snmp_community, snmp_version, snmp_username, snmp_password, snmp_port, snmp_timeout, disabled, availability_method, ping_method, ping_port, ping_timeout, ping_retries, snmp_auth_protocol, snmp_priv_passphrase, snmp_priv_protocol, snmp_context, max_oids, device_threads FROM host");
 
 // Get Oses
 $temp = db_fetch_assoc("SELECT plugin_dpdiscover_template.*, host_template.name 
@@ -285,8 +285,9 @@ foreach($known_hosts as $host) {
 		$dpdiscovered['ip'][$hostip] = $dphost;
 		$dpdiscovered['hostname'][$fqdnname] = $dphost;
 	}
-	if(is_ipv4($dpdiscovered['dphost'][$dphost]['ip']) ||
-	   is_ipv6($dpdiscovered['dphost'][$dphost]['ip'])) {
+	if((is_ipv4($dpdiscovered['dphost'][$dphost]['ip']) ||
+	   is_ipv6($dpdiscovered['dphost'][$dphost]['ip'])) &&
+	   $dpdiscovered['dphost'][$dphost]['disabled'] != "on") {
 		dpdiscover_debug($dphost." ");
 		dpdiscover_get_snmp_values($dpdiscovered['dphost'][$dphost]);
 	}
@@ -301,6 +302,11 @@ $sidx = 0;
 */
 while(isset($search[$sidx])) {
 	$shortsearch = get_shorthost($search[$sidx]['description']);
+	if ($search[$sidx]['disabled'] == "on") {
+		dpdiscover_debug("$sidx $shortsearch is disabled");
+		$sidx++;
+		continue;
+	}
 	if(check_exclusion($shortsearch)) {
 		dpdiscover_debug("$sidx Excluding $shortsearch\n");
 		$sidx++;
@@ -504,6 +510,10 @@ if (isset($dpdiscovered['dphost'])) {
 	foreach($dpdiscovered['dphost'] as $host => $device) {
 		if(isset($device['newname'])) {
 			dpdiscover_debug("Skipping ".$host." = ".$device['newname']."\n");
+			continue;
+		}
+		if($device['disabled'] == "on") {
+			dpdiscover_debug("Skipping ".$host." - DISABLED\n");
 			continue;
 		}
 		if(!isset($device['parent'])) {
