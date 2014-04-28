@@ -203,7 +203,7 @@ $fix_ip_hostname = read_config_option("dpdiscover_fix_ip_hostname");
 cacti_log("DP Discover is now running", true, "POLLER");
 
 // Get array of snmp information.
-$known_hosts = db_fetch_assoc("SELECT id, host_template_id, description, hostname, snmp_community, snmp_version, snmp_username, snmp_password, snmp_port, snmp_timeout, disabled, availability_method, ping_method, ping_port, ping_timeout, ping_retries, snmp_auth_protocol, snmp_priv_passphrase, snmp_priv_protocol, snmp_context, max_oids, device_threads FROM host");
+$known_hosts = db_fetch_assoc("SELECT id, host_template_id, description, hostname, snmp_community, snmp_version, snmp_username, snmp_password, snmp_port, snmp_timeout, disabled, availability_method, ping_method, ping_port, ping_timeout, ping_retries, snmp_auth_protocol, snmp_priv_passphrase, snmp_priv_protocol, snmp_context, max_oids, device_threads FROM host WHERE disabled!='on'");
 
 // Get Oses
 $temp = db_fetch_assoc("SELECT plugin_dpdiscover_template.*, host_template.name 

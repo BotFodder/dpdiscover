@@ -4,7 +4,7 @@
     Contact ........ eric@ericdives.com
     Home Site ...... http://runningoffatthemouth.com
     Program ........ DP Discover
-    Version ........ 1.41
+    Version ........ 1.43
     Purpose ........ Find Network Equipment Using Discovery Protocols
 
 *******************************************************************************/
@@ -39,6 +39,13 @@ existing hosts via SNMP, and attempts to add unknown equipment to Cacti.
 
 ----[ Changelog
 
+    --- 1.43 ---
+    - "disabled" hosts are completely ignored - they are not probed for *dp
+      information.
+    --- 1.42 ---
+    - Some of the timing code was tweaked to hopefully have the findhosts.php
+      job running more regularly.  Prior, over time there would be a delay in
+      when the job would run.
     --- 1.41 ---
     - Name change code modified to be optional - see settings.
     --- 1.40 ---
