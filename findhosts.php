@@ -303,7 +303,7 @@ $sidx = 0;
 while(isset($search[$sidx])) {
 	$shortsearch = get_shorthost($search[$sidx]['description']);
 	if ($search[$sidx]['disabled'] == "on") {
-		dpdiscover_debug("$sidx $shortsearch is disabled");
+		dpdiscover_debug("$sidx $shortsearch is disabled\n");
 		$sidx++;
 		continue;
 	}
@@ -512,7 +512,7 @@ if (isset($dpdiscovered['dphost'])) {
 			dpdiscover_debug("Skipping ".$host." = ".$device['newname']."\n");
 			continue;
 		}
-		if($device['disabled'] == "on") {
+		if(isset($device['disabled']) && $device['disabled'] == "on") {
 			dpdiscover_debug("Skipping ".$host." - DISABLED\n");
 			continue;
 		}
