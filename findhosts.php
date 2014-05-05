@@ -302,7 +302,7 @@ $sidx = 0;
 */
 while(isset($search[$sidx])) {
 	$shortsearch = get_shorthost($search[$sidx]['description']);
-	if (isset(search[$sidx]['disabled']) && $search[$sidx]['disabled'] == "on") {
+	if (isset($search[$sidx]['disabled']) && $search[$sidx]['disabled'] == "on") {
 		dpdiscover_debug("$sidx $shortsearch is disabled\n");
 		$sidx++;
 		continue;
