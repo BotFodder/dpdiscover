@@ -204,6 +204,10 @@ cacti_log("DP Discover is now running", true, "POLLER");
 
 // Get array of snmp information.
 $known_hosts = db_fetch_assoc("SELECT id, host_template_id, description, hostname, snmp_community, snmp_version, snmp_username, snmp_password, snmp_port, snmp_timeout, disabled, availability_method, ping_method, ping_port, ping_timeout, ping_retries, snmp_auth_protocol, snmp_priv_passphrase, snmp_priv_protocol, snmp_context, max_oids, device_threads FROM host");
+if (!is_array($known_hosts)) {
+	cacti_log("DP Discover failed to pull known hosts? Exiting.", true, "POLLER");
+	exit;
+}
 
 // Get Oses
 $temp = db_fetch_assoc("SELECT plugin_dpdiscover_template.*, host_template.name 
@@ -213,10 +217,19 @@ $temp = db_fetch_assoc("SELECT plugin_dpdiscover_template.*, host_template.name
 
 $os = array();
 $templates = array();
+$count = 0;
 if (is_array($temp)) {
 	foreach ($temp as $d) {
 		$os[] = $d;
+		$count++;
 	}
+}else{
+	cacti_log("DP Discover ended: had issues finding DPDiscover Templates, exiting.", true, "POLLER");
+	exit;
+}
+if($count == 0) {
+	cacti_log("No DP Discover Templates found, exiting.", true, "POLLER");
+	exit;
 }
 $temp = db_fetch_assoc("SELECT id, name FROM host_template");
 if (is_array($temp)) {
@@ -957,6 +970,9 @@ function dpdiscover_recreate_tables () {
 
 function dpdiscover_find_os($text) {
 	global $os;
+	if($text == "") {
+		return false;
+	}
 	for ($a = 0; $a < count($os); $a++) {
 		if (stristr($text, $os[$a]['sysdescr'])) {
 			return $os[$a];
