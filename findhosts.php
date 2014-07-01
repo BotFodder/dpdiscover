@@ -66,6 +66,7 @@ include_once($config["base_path"] . '/lib/sort.php');
 include_once($config["base_path"] . '/lib/html_form_template.php');
 include_once($config["base_path"] . '/lib/template.php');
 
+$current_time = strtotime("now");
 dpdiscover_check_upgrade();
 /* process calling arguments */
 $parms = $_SERVER["argv"];
@@ -134,6 +135,11 @@ if ($base_start_time == '') {
 	$base_start_time = '12:00am';
 }
 
+$minutes = date("i", strtotime($base_start_time));
+$hourdate = date("Y-m-d H:$minutes:00");
+$hourtime = strtotime($hourdate);
+dpdiscover_debug($hourdate . " " . $hourtime . "\n");
+
 /* see if the user desires a new start time */
 dpdiscover_debug("Checking if user changed the start time\n");
 if (!empty($previous_base_start_time)) {
@@ -154,7 +160,6 @@ if (!isset($poller_interval)) {
 db_execute("REPLACE INTO settings (name, value) VALUES ('dpdiscover_prev_base_time', '$base_start_time')");
 
 /* determine the next start time */
-$current_time = strtotime("now");
 if (empty($last_run_time)) {
 	if ($current_time > strtotime($base_start_time)) {
 		/* if timer expired within a polling interval, then poll */
@@ -185,8 +190,9 @@ if ($forcerun) {
 	dpdiscover_debug("Scanning has been forced\n");
 }
 
+/* Let's fake this to be on the current hour, instead of the actual time */
 if ($forcerun == FALSE) {
-	db_execute("REPLACE INTO settings (name, value) VALUES ('dpdiscover_last_run_time', '$current_time')");
+	db_execute("REPLACE INTO settings (name, value) VALUES ('dpdiscover_last_run_time', '$hourtime')");
 }
 
 /* If name data from LLDP doesn't tell us the FQDN or IP, then we'll append
