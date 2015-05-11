@@ -4,7 +4,7 @@
     Contact ........ eric@ericdives.com
     Home Site ...... http://runningoffatthemouth.com
     Program ........ DP Discover
-    Version ........ 1.44
+    Version ........ 1.45
     Purpose ........ Find Network Equipment Using Discovery Protocols
 
 *******************************************************************************/
@@ -39,6 +39,10 @@ existing hosts via SNMP, and attempts to add unknown equipment to Cacti.
 
 ----[ Changelog
 
+    --- 1.45 ---
+    - Finally came up with a way to hopefully eliminate start time drift; now
+      the time saved to the DB as the "start" time of the last run is saved
+      with a "minute" value based on the original "Start Time For Polling".
     --- 1.44 ---
     - Added some sanity checks at the beginning of "findhosts.php" so that if
       required things are missing, the check stops running.
