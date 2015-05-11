@@ -39,6 +39,8 @@ existing hosts via SNMP, and attempts to add unknown equipment to Cacti.
 
 ----[ Changelog
 
+    --- 1.46 ---
+    - findhost.php update to check the size of the templates - if < 1, exit.
     --- 1.45 ---
     - Finally came up with a way to hopefully eliminate start time drift; now
       the time saved to the DB as the "start" time of the last run is saved
