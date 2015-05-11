@@ -224,7 +224,7 @@ $temp = db_fetch_assoc("SELECT plugin_dpdiscover_template.*, host_template.name
 $os = array();
 $templates = array();
 $count = 0;
-if (is_array($temp)) {
+if (is_array($temp) && count($temp) > 0) {
 	foreach ($temp as $d) {
 		$os[] = $d;
 		$count++;
