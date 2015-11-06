@@ -279,7 +279,7 @@ foreach($known_hosts as $host) {
 	$dpdiscovered['dphost'][$dphost] = $host;
 // Okay, change what we need to.
 	$dpdiscovered['dphost'][$dphost]['protocol'] = "known";
-	$dpdiscovered['dphost'][$dphost]['description'][$host['description']] = $dphost;
+//	$dpdiscovered['dphost'][$dphost]['description'][$host['description']] = $dphost;
 	$dpdiscovered['dphost'][$dphost]['added'] = 0;
 	$dpdiscovered['dphost'][$dphost]['os'] = $templates[$dpdiscovered['dphost'][$dphost]['host_template_id']];
 	$dpdiscovered['dphost'][$dphost]['snmp_sysName'] = '';
