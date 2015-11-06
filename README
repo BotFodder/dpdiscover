@@ -4,7 +4,7 @@
     Contact ........ eric@ericdives.com
     Home Site ...... http://runningoffatthemouth.com
     Program ........ DP Discover
-    Version ........ 1.45
+    Version ........ 1.47
     Purpose ........ Find Network Equipment Using Discovery Protocols
 
 *******************************************************************************/
@@ -39,6 +39,13 @@ existing hosts via SNMP, and attempts to add unknown equipment to Cacti.
 
 ----[ Changelog
 
+    --- 1.47 ---
+    - Unnecessary line trying to do some weird crap with 'description' - not
+      needed, so line commented out.  Best case, I was trying to change the
+      'description' of a "known" host, which is not necessary.  Worst case,
+      I was high or drunk.  And I don't drink or do drugs.  Error unnoticed
+      until someone started using PHP 5.4.x.  It may get added in later in a
+      more sane fashion if I figure out it is needed for some reason.
     --- 1.46 ---
     - findhost.php update to check the size of the templates - if < 1, exit.
     --- 1.45 ---
