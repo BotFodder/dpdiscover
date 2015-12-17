@@ -1,10 +1,10 @@
 /*******************************************************************************
 
     Author ......... Eric Stewart
-    Contact ........ eric@ericdives.com
+    Contact ........ botfodder@gmail.com
     Home Site ...... http://runningoffatthemouth.com
     Program ........ DP Discover
-    Version ........ 1.47
+    Version ........ 1.48
     Purpose ........ Find Network Equipment Using Discovery Protocols
 
 *******************************************************************************/
@@ -39,6 +39,12 @@ existing hosts via SNMP, and attempts to add unknown equipment to Cacti.
 
 ----[ Changelog
 
+    --- 1.48 ---
+    - Cleaned up some code for the (mostly ignored by me, but someone's using
+      it) "discover" tab in dpdiscover.php.  There's a lot of cruft in there
+      left over from the original "Auto Discovery" plugin.  I would assume at
+      this point that that functionality is still quite buggy.  Report your
+      experience and I'll fix what I can.
     --- 1.47 ---
     - Unnecessary line trying to do some weird crap with 'description' - not
       needed, so line commented out.  Best case, I was trying to change the

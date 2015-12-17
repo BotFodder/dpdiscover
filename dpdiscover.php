@@ -102,7 +102,7 @@ if (isset($_REQUEST["button_clear_x"])) {
 
 /* remember these search fields in session vars so we don't have to keep passing them around */
 load_current_session_value("page", "sess_dpdiscover_current_page", "1");
-load_current_session_value("status", "sess_dpdiscover_status", "");
+// load_current_session_value("status", "sess_dpdiscover_status", "");
 load_current_session_value("snmp", "sess_dpdiscover_snmp", "");
 load_current_session_value("os", "sess_dpdiscover_os", "");
 load_current_session_value("host", "sess_dpdiscover_host", "");
@@ -118,18 +118,18 @@ $os         = get_request_var_request("os");
 $host       = get_request_var_request("host");
 $ip         = get_request_var_request("ip");
 
+/* Okay - this isn't used ... not really
 if ($status == 'Down') {
-	$sql_where .= "WHERE up=0";
+	$sql_where .= "WHERE snmp_status=0";
 }else if ($status == 'Up') {
-	$sql_where .= "WHERE up=1";
+	$sql_where .= "WHERE snmp_status=1";
 }
-
+*/
 if ($snmp == 'Down') {
-	$sql_where .= (strlen($sql_where) ? " AND ":"WHERE ") . "snmp=0";
+	$sql_where .= (strlen($sql_where) ? " AND ":"WHERE ") . "snmp_status=0";
 }else if ($snmp == 'Up') {
-	$sql_where .= (strlen($sql_where) ? " AND ":"WHERE ") . "snmp=1";
+	$sql_where .= (strlen($sql_where) ? " AND ":"WHERE ") . "snmp_status=1";
 }
-
 if ($os != '' && in_array($os, $os_arr)) {
 	$sql_where .= (strlen($sql_where) ? " AND ":"WHERE ") . "os='$os'";
 }
@@ -221,16 +221,7 @@ function applyFilterChange(objForm) {
 -->
 </script>
 <?php
-
-// TOP DEVICE SELECTION
-html_start_box("<strong>Filters</strong>", "100%", $colors["header"], "3", "center", "");
-
-?>
-<tr bgcolor="#<?php print $colors["panel"];?>" class="noprint">
-	<td class="noprint">
-	<form style="padding:0px;margin:0px;" name="form" method="get" action="<?php print $config['url_path'];?>plugins/dpdiscover/dpdiscover.php">
-		<table width="100%" cellpadding="0" cellspacing="0">
-			<tr class="noprint">
+/* REMOVED FROM CODE.  We don't use this value so we shouldn't present it.
 				<td nowrap style='white-space: nowrap;' width="1">
 					&nbsp;Status:&nbsp;
 				</td>
@@ -246,6 +237,16 @@ html_start_box("<strong>Filters</strong>", "100%", $colors["header"], "3", "cent
 						?>
 					</select>
 				</td>
+*/
+// TOP DEVICE SELECTION
+html_start_box("<strong>Filters</strong>", "100%", $colors["header"], "3", "center", "");
+
+?>
+<tr bgcolor="#<?php print $colors["panel"];?>" class="noprint">
+	<td class="noprint">
+	<form style="padding:0px;margin:0px;" name="form" method="get" action="<?php print $config['url_path'];?>plugins/dpdiscover/dpdiscover.php">
+		<table width="100%" cellpadding="0" cellspacing="0">
+			<tr class="noprint">
 				<td nowrap style='white-space: nowrap;' width="1">
 					&nbsp;OS:&nbsp;
 				</td>
