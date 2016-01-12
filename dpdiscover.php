@@ -33,9 +33,9 @@ dpdiscover_setup_table();
 dpdiscover_check_upgrade();
 
 define("MAX_DISPLAY_PAGES", 21);
-
 $os_arr     = array_rekey(db_fetch_assoc("SELECT DISTINCT os FROM plugin_dpdiscover_hosts"), "os", "os");
 $status_arr = array('Down', 'Up');
+$protocol_arr = array_rekey(db_fetch_assoc("SELECT DISTINCT protocol FROM plugin_dpdiscover_hosts"), "protocol", "protocol");
 
 /* ================= input validation ================= */
 input_validate_input_number(get_request_var("page"));
@@ -55,6 +55,11 @@ if (isset($_REQUEST["snmp"])) {
 /* clean up os string */
 if (isset($_REQUEST["os"])) {
 	$_REQUEST["os"] = sanitize_search_string(get_request_var("os"));
+}
+
+/* clean up os string */
+if (isset($_REQUEST["protocol"])) {
+	$_REQUEST["protocol"] = sanitize_search_string(get_request_var("protocol"));
 }
 
 /* clean up host string */
@@ -88,6 +93,7 @@ if (isset($_REQUEST["button_clear_x"])) {
 	kill_session_var("sess_dpdiscover_rows");
 	kill_session_var("sess_dpdiscover_sort_column");
 	kill_session_var("sess_dpdiscover_sort_direction");
+	kill_session_var("sess_dpdiscover_protocol");
 
 	unset($_REQUEST["page"]);
 	unset($_REQUEST["status"]);
@@ -98,12 +104,14 @@ if (isset($_REQUEST["button_clear_x"])) {
 	unset($_REQUEST["rows"]);
 	unset($_REQUEST["sort_column"]);
 	unset($_REQUEST["sort_direction"]);
+	unset($_REQUEST["protocol"]);
 }
 
 /* remember these search fields in session vars so we don't have to keep passing them around */
 load_current_session_value("page", "sess_dpdiscover_current_page", "1");
 // load_current_session_value("status", "sess_dpdiscover_status", "");
 load_current_session_value("snmp", "sess_dpdiscover_snmp", "");
+load_current_session_value("protocol", "sess_dpdiscover_protocol", "");
 load_current_session_value("os", "sess_dpdiscover_os", "");
 load_current_session_value("host", "sess_dpdiscover_host", "");
 load_current_session_value("ip", "sess_dpdiscover_ip", "");
@@ -117,6 +125,7 @@ $snmp       = get_request_var_request("snmp");
 $os         = get_request_var_request("os");
 $host       = get_request_var_request("host");
 $ip         = get_request_var_request("ip");
+$protocol   = get_request_var_request("protocol");
 
 /* Okay - this isn't used ... not really
 if ($status == 'Down') {
@@ -140,6 +149,10 @@ if ($host != '') {
 
 if ($ip != '') {
 	$sql_where .= (strlen($sql_where) ? " AND ":"WHERE ") . "ip like '%$ip%'";
+}
+
+if ($protocol != '') {
+	$sql_where .= (strlen($sql_where) ? " AND ":"WHERE ") . "protocol='$protocol'";
 }
 
 if (isset($_GET['button_export_x'])) {
@@ -257,6 +270,21 @@ html_start_box("<strong>Filters</strong>", "100%", $colors["header"], "3", "cent
 						if (sizeof($os_arr)) {
 						foreach ($os_arr as $st) {
 							print "<option value='" . $st . "'"; if (get_request_var_request("os") == $st) { print " selected"; } print ">" . $st . "</option>\n";
+						}
+						}
+						?>
+					</select>
+				</td>
+				<td nowrap style='white-space: nowrap;' width="1">
+					&nbsp;PROTOCOL:&nbsp;
+				</td>
+				<td width="1">
+					<select name="protocol" onChange="applyFilterChange(document.form)">
+						<option value=""<?php if (get_request_var_request("protocol") == "") {?> selected<?php }?>>Any</option>
+						<?php
+						if (sizeof($protocol_arr)) {
+						foreach ($protocol_arr as $st) {
+							print "<option value='" . $st . "'"; if (get_request_var_request("protocol") == $st) { print " selected"; } print ">" . $st . "</option>\n";
 						}
 						}
 						?>

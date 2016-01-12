@@ -4,7 +4,7 @@
     Contact ........ botfodder@gmail.com
     Home Site ...... http://runningoffatthemouth.com
     Program ........ DP Discover
-    Version ........ 1.48
+    Version ........ 1.49
     Purpose ........ Find Network Equipment Using Discovery Protocols
 
 *******************************************************************************/
@@ -39,6 +39,9 @@ existing hosts via SNMP, and attempts to add unknown equipment to Cacti.
 
 ----[ Changelog
 
+    --- 1.49 ---
+    - Added filter to "discover" tab for "Protocol", so you can view just the
+      entries in the database discovered by a particular protocol.
     --- 1.48 ---
     - Cleaned up some code for the (mostly ignored by me, but someone's using
       it) "discover" tab in dpdiscover.php.  There's a lot of cruft in there
