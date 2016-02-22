@@ -396,6 +396,10 @@ $snmp_password       = read_config_option("snmp_password");
 $max_oids            = read_config_option("max_get_size");
 $ping_method         = read_config_option("ping_method");
 $availability_method = read_config_option("availability_method");
+$ping_timeout        = read_config_option("ping_timeout");
+$ping_retries        = read_config_option("ping_retries");
+$use_ip              = read_config_option("dpdiscover_use_ip_hostname");
+$use_fqdn_desc       = read_config_option("dpdiscover-use_fqdn_for_description");
 
 $i=0;
 $status = array('<font color=red>Down</font>','<font color=green>Up</font>');
@@ -432,9 +436,21 @@ if ($row['protocol'] != "known" && $row['added'] != 1) {
 			<input type=hidden name=save_component_host value=1>
 			<input type=hidden name=host_template_id value=0>
 			<input type=hidden name=action value=\"save\">
-			<input type=hidden name=hostname value=\"" . $row['ip'] . "\">
+			<input type=hidden name=hostname value=\"";
+			if($use_ip == "on") {
+				print $row['ip'];
+			} else {
+				print $row['hostname'];
+			}
+			print "\">
 			<input type=hidden name=id value=0>
-			<input type=hidden name=description value=\"".$row['hostname']."\">
+			<input type=hidden name=description value=\"";
+			if($use_fqdn_for_hostname == "on") {
+				print $row['hostname'];
+			} else {
+				print get_shorthost($row['hostname']);
+			}
+			print "\">
 			<input type=hidden name=snmp_community value=\"" . $row['snmp_community'] . "\">
 			<input type=hidden name=snmp_version value=\"$snmp_version\">
 			<input type=hidden name=snmp_username value=\"$snmp_username\">
@@ -445,8 +461,8 @@ if ($row['protocol'] != "known" && $row['added'] != 1) {
 			<input type=hidden name=availability_method value=\"$availability_method\">
 			<input type=hidden name=ping_method value=\"$ping_method\">
 			<input type=hidden name=ping_port value=\"\">
-			<input type=hidden name=ping_timeout value=\"\">
-			<input type=hidden name=ping_retries value=\"\">
+			<input type=hidden name=ping_timeout value=\"$ping_timeout\">
+			<input type=hidden name=ping_retries value=\"$ping_retries\">
 			<input type=hidden name=notes value=\"\">
 			<input type=hidden name=snmp_auth_protocol value=\"\">
 			<input type=hidden name=snmp_priv_passphrase value=\"\">
@@ -469,5 +485,65 @@ print $nav;
 html_end_box(false);
 
 include_once("./include/bottom_footer.php");
+
+/* Oh, someday I may need to make this better. */
+function is_fqdn($address) {
+	if(is_ipv4($address) || is_ipv6($address)) {
+		return FALSE;
+	}else{
+		if(preg_match("/^udp6:(.*)$/", $address, $matches)) {
+			$address = $matches[1];
+		}
+		return (!empty($address) && preg_match('/(?=^.{1,254}$)(^(?:(?!\d|-)[a-z0-9\-]{1,63}(?<!-)\.)+(?:[a-z]{2,})$)/i', $address) > 0);
+	}
+}
+
+function make_fqdn($address) {
+	global $domain_name;
+	if(preg_match("/^udp6:(.*)$/", $address, $matches)) {
+		$address = $matches[1];
+	}
+	if(!is_fqdn($address)) {
+		$address = $address.".".$domain_name;
+	}
+	return $address;
+}
+
+function get_shorthost($address) {
+	if(!is_fqdn($address)) {
+		return $address;
+	}else{
+		return substr($address, 0, strpos($address, "."));
+	}
+}
+
+function is_ipv4($address) {
+	if(filter_var($address, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) === FALSE) {
+		return FALSE;
+	}else{
+		return TRUE;
+	}
+}
+
+function is_ipv6($address) {
+	if(filter_var($address, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) === FALSE) {
+		// Check for SNMP specification and brackets
+		if(preg_match("/udp6:\[(.*)\]/", $address, $matches) > 0 &&
+			filter_var($matches[1], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== FALSE) {
+			return TRUE;
+		}
+		return FALSE;
+	}else{
+		return TRUE;
+	}
+}
+
+function is_ipv6_raw($address) {
+	if(filter_var($address, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) === FALSE) {
+		return FALSE;
+	}else{
+		return TRUE;
+	}
+}
 
 ?>
