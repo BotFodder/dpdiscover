@@ -4,7 +4,7 @@
     Contact ........ botfodder@gmail.com
     Home Site ...... http://runningoffatthemouth.com
     Program ........ DP Discover
-    Version ........ 1.49
+    Version ........ 1.50
     Purpose ........ Find Network Equipment Using Discovery Protocols
 
 *******************************************************************************/
@@ -39,6 +39,14 @@ existing hosts via SNMP, and attempts to add unknown equipment to Cacti.
 
 ----[ Changelog
 
+    --- 1.50 ---
+    - Fabrice35 on GitHub has quickly become my debugger for the "discover"
+      tab.  He encountered issues with some values on the "add" screen being
+      zero (instead of pulling from the default settings) as well as the
+      "description" field not following the DPDiscover settings ("FQDN" or
+      not).  In addition to these issues, I figured the IP/Hostname setting
+      in DPDiscover should also be checked before passing values to the "add"
+      function in Cacti.  These issues are marked as resolved in 1.50.
     --- 1.49 ---
     - Added filter to "discover" tab for "Protocol", so you can view just the
       entries in the database discovered by a particular protocol.
