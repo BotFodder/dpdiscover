@@ -465,7 +465,7 @@ if ($row['protocol'] != "known" && $row['added'] != 1) {
 			<input type='submit' value='Add' style='text-align:middle;font-size:11px;'>
 			</form></td>";
 	}else{
-		print "<B>Added</B><!-- $testid --></td>";
+		print "<B>ADDED</B><!-- $testid --></td>";
 	}
 }else{
 		print "</td>";
