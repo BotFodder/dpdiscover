@@ -234,14 +234,6 @@ function applyFilterChange(objForm) {
 -->
 </script>
 <?php
-/* REMOVED FROM CODE.  We don't use this value so we shouldn't present it.
-				<td nowrap style='white-space: nowrap;' width="1">
-					&nbsp;Status:&nbsp;
-				</td>
-				<td width="1">
-					<select name="status" onChange="applyFilterChange(document.form)">
-						<option value=""<?php if (get_request_var_request("status") == "") {?> selected<?php }?>>Any</option>
-						<?php
 						if (sizeof($status_arr)) {
 						foreach ($status_arr as $st) {
 							print "<option value='" . $st . "'"; if (get_request_var_request("status") == $st) { print " selected"; } print ">" . $st . "</option>\n";
@@ -432,25 +424,25 @@ if (sizeof($result)) {
 			<td>' . $row['lastseen'] . '</td>
 			<td align="right">';
 if ($row['protocol'] != "known" && $row['added'] != 1) {
+	if($use_fqdn_for_hostname == "on") {
+		$addname = $row['hostname'];
+	}else{
+		$addname = get_shorthost($row['hostname']);
+	}
+	if($use_ip == "on") {
+		$addaddr = $row['ip'];
+	}else{
+		$addaddr = $row['hostname'];
+	}
+	$testid = get_id_from_name_addr($addname, $addaddr);
+	if($testid === FALSE || $testid == 0) {
 		print "<form style=\"padding:0px;margin:0px;\" method=\"post\" action=\"../../host.php\">
 			<input type=hidden name=save_component_host value=1>
 			<input type=hidden name=host_template_id value=0>
 			<input type=hidden name=action value=\"save\">
-			<input type=hidden name=hostname value=\"";
-			if($use_ip == "on") {
-				print $row['ip'];
-			} else {
-				print $row['hostname'];
-			}
-			print "\">
+			<input type=hidden name=hostname value=\"$addaddr\">
 			<input type=hidden name=id value=0>
-			<input type=hidden name=description value=\"";
-			if($use_fqdn_for_hostname == "on") {
-				print $row['hostname'];
-			} else {
-				print get_shorthost($row['hostname']);
-			}
-			print "\">
+			<input type=hidden name=description value=\"$addname\">
 			<input type=hidden name=snmp_community value=\"" . $row['snmp_community'] . "\">
 			<input type=hidden name=snmp_version value=\"$snmp_version\">
 			<input type=hidden name=snmp_username value=\"$snmp_username\">
@@ -472,6 +464,9 @@ if ($row['protocol'] != "known" && $row['added'] != 1) {
 			<input type=hidden name=device_threads value=\"1\">
 			<input type='submit' value='Add' style='text-align:middle;font-size:11px;'>
 			</form></td>";
+	}else{
+		print "<B>Added</B><!-- $testid --></td>";
+	}
 }else{
 		print "</td>";
 }
@@ -485,6 +480,16 @@ print $nav;
 html_end_box(false);
 
 include_once("./include/bottom_footer.php");
+
+function get_id_from_name_addr($description, $address) {
+	$host = db_fetch_assoc("SELECT id FROM host WHERE description='$decription' AND hostname='$address'");
+	if (!is_array($host)) {
+		return FALSE;
+	} else {
+		$hostid = $host[0]['id'];
+		return $hostid;
+	}
+}
 
 /* Oh, someday I may need to make this better. */
 function is_fqdn($address) {
