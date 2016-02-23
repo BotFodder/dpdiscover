@@ -234,15 +234,6 @@ function applyFilterChange(objForm) {
 -->
 </script>
 <?php
-						if (sizeof($status_arr)) {
-						foreach ($status_arr as $st) {
-							print "<option value='" . $st . "'"; if (get_request_var_request("status") == $st) { print " selected"; } print ">" . $st . "</option>\n";
-						}
-						}
-						?>
-					</select>
-				</td>
-*/
 // TOP DEVICE SELECTION
 html_start_box("<strong>Filters</strong>", "100%", $colors["header"], "3", "center", "");
 
@@ -482,11 +473,12 @@ html_end_box(false);
 include_once("./include/bottom_footer.php");
 
 function get_id_from_name_addr($description, $address) {
-	$host = db_fetch_assoc("SELECT id FROM host WHERE description='$decription' AND hostname='$address'");
+	$host = db_fetch_assoc("SELECT id FROM host WHERE description='$description' AND hostname='$address'");
 	if (!is_array($host)) {
 		return FALSE;
 	} else {
-		$hostid = $host[0]['id'];
+		$firsthost = current($host);
+		$hostid = $firsthost['id'];
 		return $hostid;
 	}
 }
