@@ -4,7 +4,7 @@
     Contact ........ botfodder@gmail.com
     Home Site ...... http://runningoffatthemouth.com
     Program ........ DP Discover
-    Version ........ 1.50
+    Version ........ 1.51
     Purpose ........ Find Network Equipment Using Discovery Protocols
 
 *******************************************************************************/
@@ -39,6 +39,14 @@ existing hosts via SNMP, and attempts to add unknown equipment to Cacti.
 
 ----[ Changelog
 
+    --- 1.51 ---
+    - The "discover" tab offers the ability to add devices discovered that
+      were not automatically added.  However, if you add a device, in
+      previous versions, the report would not indicate that the device was
+      added.  In this version, providing the device was added with both the
+      'description' and 'hostname' offered by the "Add" button, the tab
+      should indicate (both in "protocol" and where the "Add button shows up)
+      that the device was "ADDED".
     --- 1.50 ---
     - Fabrice35 on GitHub has quickly become my debugger for the "discover"
       tab.  He encountered issues with some values on the "add" screen being
