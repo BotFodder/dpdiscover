@@ -399,33 +399,37 @@ if (sizeof($result)) {
 		if ($row["hostname"] == "") {
 			$row["hostname"] = "Not Detected";
 		}
+		if($use_fqdn_for_hostname == "on") {
+			$addname = $row['hostname'];
+		}else{
+			$addname = get_shorthost($row['hostname']);
+		}
+		if($use_ip == "on") {
+			$addaddr = $row['ip'];
+		}else{
+			$addaddr = $row['hostname'];
+		}
+		$testid = get_id_from_name_addr($addname, $addaddr);
 
 		print"<td style='padding: 4px; margin: 4px;'>" . $row['hostname'] . "</td>
-			<td>" . $row['ip'] . '</td>
-			<td>' . $row['sysName'] . '</td>
-			<td>' . $row['sysLocation'] . '</td>
-			<td>' . $row['sysContact'] . '</td>
-			<td>' . $row['sysDescr'] . '</td>
-			<td>' . $row['os'] . '</td>
-			<td>' . $row['parent'] . '</td>
-			<td>' . $row['port'] . '</td>
-			<td>' . $row['protocol'] . '</td>
-			<td>' . $uptime . '</td>
+			<td>" . $row['ip'] . "</td>
+			<td>" . $row['sysName'] . "</td>
+			<td>" . $row['sysLocation'] . "</td>
+			<td>" . $row['sysContact'] . "</td>
+			<td>" . $row['sysDescr'] . "</td>
+			<td>" . $row['os'] . "</td>
+			<td>" . $row['parent'] . "</td>
+			<td>" . $row['port'] . "</td>\n";
+		if($row['protocol'] != "known" && $testid !== FALSE && $testid != 0) {
+			print "<td><B>ADDED</B></td>\n";
+		}else{
+			print  "<td>" . $row['protocol'] . "</td>\n";
+		}
+		print '<td>' . $uptime . '</td>
 			<td>' . $status[$row['snmp_status']] . '</td>
 			<td>' . $row['lastseen'] . '</td>
 			<td align="right">';
 if ($row['protocol'] != "known" && $row['added'] != 1) {
-	if($use_fqdn_for_hostname == "on") {
-		$addname = $row['hostname'];
-	}else{
-		$addname = get_shorthost($row['hostname']);
-	}
-	if($use_ip == "on") {
-		$addaddr = $row['ip'];
-	}else{
-		$addaddr = $row['hostname'];
-	}
-	$testid = get_id_from_name_addr($addname, $addaddr);
 	if($testid === FALSE || $testid == 0) {
 		print "<form style=\"padding:0px;margin:0px;\" method=\"post\" action=\"../../host.php\">
 			<input type=hidden name=save_component_host value=1>
